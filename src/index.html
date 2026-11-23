@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<title>Elliptic curve → torus (v3)</title>
+<meta name="description" content="Plot points of y² = x³ + ax + b over F_p on a torus: u = 2πx/p around the hole, v = 2πy/p around the tube. Nine shapes, offline, single file.">
+<meta name="author" content="idlebg.com">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23070b10'/%3E%3Cellipse cx='32' cy='33' rx='23' ry='14' fill='none' stroke='%232de2e6' stroke-width='5'/%3E%3Cpath d='M21 31c6 5 16 5 22 0M24 34c5-3 11-3 16 0' fill='none' stroke='%232de2e6' stroke-width='3.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+/* ------------------------------------------------------------------ tokens */
+:root {
+  --font-ui: "Segoe UI Variable Text", "Segoe UI", "SF Pro Text", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-num: "Cascadia Mono", "JetBrains Mono", "SF Mono", ui-monospace, Menlo, Consolas, "Liberation Mono", monospace;
+  --panel-w: 372px;
+  --r-s: 6px; --r-m: 10px; --r-l: 12px;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #070b10; --panel: #0a1017; --panel-2: #0d151e; --panel-3: #111b26; --field: #070c12;
+  --line: #17222d; --line-2: #233140; --text: #d5e1ea; --muted: #8293a3; --faint: #55667a;
+  --accent: #2de2e6; --accent-ink: #04191a; --amber: #ffb000;
+  --ok: #4fe08a; --bad: #ff5d6c; --warn: #ffb000;
+  --c-p1: #2de2e6; --c-p2: #ffb000; --c-sum: #8cff66; --c-g: #c49bff; --c-r: #e9f0f6;
+  --card: rgba(9, 15, 22, .86); --glass: rgba(10, 16, 24, .66); --card-line: #26384a; --shadow: 0 12px 32px rgba(0, 0, 0, .5);
+  --stage-glow: radial-gradient(120% 90% at 50% 45%, #0c1520 0%, #070b10 62%);
+}
+:root[data-theme="paper"] {
+  color-scheme: light;
+  --bg: #ffffff; --panel: #f5f6f7; --panel-2: #eceef1; --panel-3: #e4e7eb; --field: #ffffff;
+  --line: #dfe3e8; --line-2: #cfd5dc; --text: #15191e; --muted: #59636e; --faint: #8b95a0;
+  --accent: #0b6bcb; --accent-ink: #ffffff; --amber: #b06a00;
+  --ok: #0f8a43; --bad: #d11a2a; --warn: #a85d00;
+  --c-p1: #f01818; --c-p2: #db00db; --c-sum: #0c9a47; --c-g: #6a3cf0; --c-r: #1c232b;
+  --card: rgba(255, 255, 255, .9); --glass: rgba(255, 255, 255, .74); --card-line: #cfd5dc; --shadow: 0 10px 28px rgba(20, 30, 45, .16);
+  --stage-glow: none;
+}
+
+/* ------------------------------------------------------------------ base */
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--text); font: 13px/1.45 var(--font-ui); -webkit-font-smoothing: antialiased; overflow: hidden; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--accent); }
+code, .num { font-family: var(--font-num); font-size: 12px; }
+.num { font-variant-numeric: tabular-nums; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+sub, sup { line-height: 0; }
+svg.ic { fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+
+.app { display: grid; grid-template-columns: var(--panel-w) minmax(0, 1fr); height: 100vh; height: 100dvh; }
+.app.panel-hidden { grid-template-columns: 0 minmax(0, 1fr); }
+.app.panel-hidden .panel { visibility: hidden; }
+
+/* ------------------------------------------------------------------ panel */
+.panel { background: var(--panel); border-right: 1px solid var(--line); overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
+.brand { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 10px; padding: 14px 14px 12px 16px; background: var(--panel); border-bottom: 1px solid var(--line); }
+.brand h1 { margin: 0; font-size: 16px; font-weight: 650; letter-spacing: -.01em; white-space: nowrap; }
+.brand h1 .to { color: var(--accent); font-weight: 400; padding: 0 1px; }
+.brand .ver { font-size: 11px; color: var(--muted); border: 1px solid var(--line-2); border-radius: 999px; padding: 0 7px; }
+.brand .sp { flex: 1; }
+
+.sec { border-bottom: 1px solid var(--line); }
+.sec > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 9px; padding: 11px 16px; font-weight: 650; font-size: 13.5px; user-select: none; transition: background .12s; }
+.sec > summary:hover { background: var(--panel-2); }
+.sec > summary::-webkit-details-marker { display: none; }
+.sec > summary .si { width: 15px; height: 15px; color: var(--muted); flex: none; }
+.sec[open] > summary .si { color: var(--accent); }
+.sec > summary::after { content: ""; width: 6px; height: 6px; flex: none; border-right: 1.5px solid var(--faint); border-bottom: 1.5px solid var(--faint); transform: translateY(-2px) rotate(45deg); transition: transform .15s; margin-left: 4px; }
+.sec[open] > summary::after { transform: translateY(1px) rotate(-135deg); }
+.sec > summary:not(:has(.aside))::after { margin-left: auto; }
+.sec > summary .aside { margin-left: auto; font-weight: 400; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55%; }
+.sec-body { padding: 2px 16px 16px; display: grid; gap: 10px; }
+
+.fld { display: grid; gap: 4px; }
+.fld > span, .lbl { font-size: 12px; color: var(--muted); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+input[type="text"], input[type="number"], select, textarea {
+  width: 100%; background: var(--field); border: 1px solid var(--line-2); border-radius: var(--r-s);
+  padding: 7px 9px; font-size: 12.5px; transition: border-color .12s, box-shadow .12s;
+}
+textarea { resize: none; font-family: var(--font-num); font-size: 12px; line-height: 1.4; word-break: break-all; overflow: hidden; min-height: 34px; }
+input:hover, select:hover, textarea:hover { border-color: var(--faint); }
+input:focus, select:focus, textarea:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent); }
+input.mono { font-family: var(--font-num); font-size: 12px; }
+.bad-input { border-color: var(--bad) !important; }
+select { appearance: none; padding-right: 28px; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 15px) 50%, calc(100% - 10px) 50%; background-size: 5px 5px; background-repeat: no-repeat; }
+
+.pt { display: grid; gap: 4px; }
+.pt-head { display: flex; align-items: center; gap: 8px; }
+.pt-head label { font-weight: 600; display: flex; align-items: center; gap: 7px; }
+.pt-head .sp { flex: 1; }
+.sw { width: 10px; height: 10px; border-radius: 50%; background: var(--c); display: inline-block; flex: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--c) 25%, transparent); }
+.sw.ring { background: transparent; border: 2px solid var(--c); box-shadow: none; }
+.sw.dash { background: transparent; border: 2px dashed var(--c); box-shadow: none; }
+.msg { margin: 0; font-size: 11.5px; color: var(--muted); min-height: 0; }
+.msg:empty { display: none; }
+.msg.bad, .err { color: var(--bad); }
+.msg.warn { color: var(--warn); }
+.err { margin: 0; font-size: 12px; }
+.err:empty { display: none; }
+.hint { margin: 0; font-size: 11.5px; color: var(--muted); }
+.hint code { font-size: 11px; color: var(--text); background: var(--panel-2); border-radius: 4px; padding: 0 4px; }
+
+.btn { background: var(--panel-2); border: 1px solid var(--line-2); border-radius: var(--r-s); padding: 7px 11px; font-size: 12.5px; cursor: pointer; white-space: nowrap; transition: background .12s, border-color .12s; }
+.btn:hover { border-color: var(--faint); background: var(--panel-3); }
+.btn:active { transform: translateY(1px); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 650; }
+.btn.primary:hover { filter: brightness(1.08); }
+.btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.btns .btn { flex: 1 1 auto; }
+.icon-btn { width: 28px; height: 28px; display: inline-grid; place-items: center; border-radius: var(--r-s); border: 1px solid var(--line-2); background: var(--panel-2); cursor: pointer; font-size: 14px; line-height: 1; padding: 0; flex: none; transition: border-color .12s, background .12s; }
+.icon-btn:hover { border-color: var(--faint); background: var(--panel-3); }
+.icon-btn svg { width: 15px; height: 15px; }
+
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--line-2); border-radius: var(--r-s); overflow: hidden; }
+.seg button { background: transparent; border: 0; padding: 6px 4px; cursor: pointer; font-size: 12.5px; color: var(--muted); transition: background .12s, color .12s; }
+.seg button:hover { color: var(--text); }
+.seg button + button { border-left: 1px solid var(--line-2); }
+.seg button[aria-checked="true"] { background: var(--panel-2); color: var(--text); font-weight: 650; box-shadow: inset 0 -2px 0 var(--accent); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { position: relative; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line-2); border-radius: 999px; padding: 4px 10px 4px 8px; font-size: 12px; cursor: pointer; user-select: none; color: var(--muted); transition: border-color .12s, background .12s, color .12s; }
+.chip:hover { color: var(--text); }
+.chip input { position: absolute; opacity: 0; pointer-events: none; }
+.chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--faint); }
+.chip:has(input:checked) { color: var(--text); border-color: var(--faint); background: var(--panel-2); }
+.chip:has(input:checked)::before { background: var(--accent); border-color: var(--accent); }
+.chip:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chip:has(input:disabled) { opacity: .45; cursor: not-allowed; }
+.chip[data-c]:has(input:checked)::before { background: var(--c); border-color: var(--c); }
+
+.chk { display: flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer; }
+.chk input { accent-color: var(--accent); margin: 0; }
+
+/* sliders: a filled track (--fill is set from the value) and a ring thumb */
+.slider { display: grid; grid-template-columns: 74px 1fr 42px; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.slider output { text-align: right; color: var(--text); font-family: var(--font-num); font-size: 11.5px; }
+input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 18px; margin: 0; background: transparent; cursor: pointer; }
+input[type="range"]:focus { box-shadow: none; }
+input[type="range"]::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--accent) var(--fill, 50%), var(--line-2) var(--fill, 50%)); }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; margin-top: -5px; border-radius: 50%; background: var(--panel); border: 2px solid var(--accent); transition: transform .12s; }
+input[type="range"]:hover::-webkit-slider-thumb, input[type="range"]:focus-visible::-webkit-slider-thumb { transform: scale(1.18); }
+input[type="range"]::-moz-range-track { height: 4px; border-radius: 2px; background: var(--line-2); }
+input[type="range"]::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--accent); }
+input[type="range"]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--panel); border: 2px solid var(--accent); }
+input[type="range"]:disabled { cursor: not-allowed; }
+
+/* shape picker: one tile per shape, the pictogram drawn from the shape's own maths */
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.tile { position: relative; display: grid; justify-items: center; gap: 1px; padding: 6px 4px 5px; border: 1px solid var(--line-2); border-radius: var(--r-s); background: var(--field); color: var(--muted); font-size: 11.5px; line-height: 1.25; text-align: center; cursor: pointer; user-select: none; transition: border-color .12s, background .12s, color .12s; }
+.tile input { position: absolute; opacity: 0; pointer-events: none; }
+.tile svg { width: 56px; height: 38px; overflow: visible; }
+.tile svg path { fill: none; stroke: currentColor; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round; }
+.tile svg path.bk { opacity: .26; }
+.tile:hover { border-color: var(--faint); color: var(--text); }
+.tile:has(input:checked) { color: var(--text); border-color: color-mix(in srgb, var(--accent) 70%, transparent); background: color-mix(in srgb, var(--accent) 8%, var(--field)); }
+.tile:has(input:checked) svg { color: var(--accent); }
+.tile:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.facts { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 12px; background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--r-s); padding: 8px 10px; }
+.facts:empty { display: none; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.facts .num { font-size: 11.5px; }
+.good { color: var(--ok); } .badc { color: var(--bad); } .warnc { color: var(--warn); }
+
+/* inspector + relations */
+.empty { color: var(--muted); font-size: 12px; margin: 0; }
+.insp-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.insp-head b { font-size: 13.5px; }
+.tag { font-size: 11px; border: 1px solid var(--line-2); border-radius: 999px; padding: 0 7px; color: var(--muted); white-space: nowrap; }
+.tag.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, transparent); }
+.tag.bad { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, transparent); }
+.tag.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, transparent); }
+.kv { display: grid; grid-template-columns: 86px minmax(0, 1fr); gap: 5px 10px; margin: 8px 0 0; font-size: 12px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; }
+.kv .hexv { font-family: var(--font-num); font-size: 11.5px; overflow-wrap: anywhere; word-break: break-all; }
+.copy { border: 0; background: none; color: var(--accent); cursor: pointer; font-size: 11px; padding: 0 0 0 6px; }
+.copy:hover { text-decoration: underline; }
+.rel { display: grid; gap: 4px; font-size: 12px; }
+.rel .r { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dashed var(--line); padding: 3px 0; }
+.rel .r:last-child { border-bottom: 0; }
+.rel .r > span:first-child { color: var(--muted); }
+.rel .r > span:last-child { text-align: right; min-width: 0; overflow-wrap: anywhere; }
+.rel .note { color: var(--muted); font-size: 11.5px; padding: 4px 0 0; }
+.testout { font-size: 12px; display: grid; gap: 4px; }
+.testout .sum { font-weight: 650; }
+.testout ol { margin: 0; padding-left: 28px; max-height: 220px; overflow: auto; color: var(--muted); }
+.testout li.f { color: var(--bad); }
+
+.foot { padding: 16px; font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.foot a { color: var(--text); text-decoration: none; border-bottom: 1px solid var(--line-2); }
+.foot a:hover { border-color: var(--accent); }
+.heart { color: #ff4d6d; }
+.foot-links { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.foot .foot-links a { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); border-bottom: 0; }
+.foot .foot-links a:hover { color: var(--accent); }
+.foot-links svg { width: 14px; height: 14px; flex: none; }
+
+/* ------------------------------------------------------------------ stage */
+.stage { position: relative; min-width: 0; min-height: 0; overflow: hidden; background: var(--bg); background-image: var(--stage-glow); }
+#gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; opacity: 0; transition: opacity .45s ease; }
+.stage.ready #gl { opacity: 1; }
+#gl.dragging { cursor: grabbing; }
+#gl.over-target { cursor: pointer; }
+.overlay { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+/* floating furniture: frosted glass over the 3D view */
+.glass { background: var(--glass); border: 1px solid var(--card-line); border-radius: var(--r-l); box-shadow: var(--shadow); -webkit-backdrop-filter: blur(12px) saturate(1.25); backdrop-filter: blur(12px) saturate(1.25); }
+
+.lab { position: absolute; left: 0; top: 0; white-space: nowrap; font-size: 11px; color: var(--muted); transform: translate(-50%, -50%); text-shadow: 0 0 3px var(--bg), 0 0 3px var(--bg); transition: opacity .12s; will-change: transform; }
+.lab.axis { color: var(--faint); font-size: 10.5px; }
+.lab.tag-pt { font-weight: 650; font-size: 11.5px; color: var(--c); transform: translate(10px, -130%); }
+.lab.hidden-behind { opacity: .28; }
+
+.card { position: absolute; left: 0; top: 0; min-width: 214px; max-width: 300px; background: var(--card); border: 1px solid var(--card-line); border-left: 3px solid var(--c); border-radius: var(--r-m); padding: 9px 11px 9px; box-shadow: var(--shadow); font-size: 12px; will-change: transform; -webkit-backdrop-filter: blur(10px) saturate(1.2); backdrop-filter: blur(10px) saturate(1.2); }
+.card.hover { pointer-events: none; z-index: 4; }
+.card.pinned:hover { z-index: 5; }
+.leaders { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.leaders line { stroke-width: 1; opacity: .75; }
+.card.pinned { pointer-events: auto; }
+.card .ch { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.card .ch b { font-size: 12.5px; }
+.card .ch .sp { flex: 1; }
+.card .x { border: 0; background: none; cursor: pointer; color: var(--muted); font-size: 15px; line-height: 1; padding: 0 2px; }
+.card .x:hover { color: var(--text); }
+.card .ck { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 2px 8px; }
+.card .ck dt { color: var(--muted); }
+.card .ck dd { margin: 0; font-family: var(--font-num); font-size: 11.5px; overflow-wrap: anywhere; }
+.card .foot-hint { margin-top: 6px; color: var(--faint); font-size: 11px; }
+.card .acts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; }
+.card .acts button { font-size: 11.5px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--panel-2); cursor: pointer; }
+.card .acts button:hover { border-color: var(--faint); }
+.card.behind { opacity: .72; }
+
+.legend { position: absolute; top: 12px; right: 12px; padding: 9px 30px 9px 11px; font-size: 12px; max-width: min(340px, 46vw); }
+.legend .rows { display: grid; gap: 4px; }
+.legend .li { display: flex; align-items: baseline; gap: 8px; }
+.legend .li > i { align-self: center; }
+.legend .li > span:first-of-type { white-space: nowrap; }
+.legend .li .v { color: var(--muted); min-width: 0; overflow-wrap: anywhere; }
+.legend .li.off { opacity: .45; }
+.legend .ln { width: 12px; height: 0; border-top: 1.5px dashed var(--c); flex: none; }
+.legend .map { margin-top: 3px; padding-top: 5px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11.5px; white-space: normal; }
+.legend.min { padding-right: 30px; }
+.legend.min .li .v, .legend.min .map { display: none; }
+.legend .lg-tog { position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; display: grid; place-items: center; padding: 0; }
+.legend .lg-tog:hover { background: var(--panel-2); color: var(--text); }
+.legend .lg-tog svg { width: 12px; height: 12px; transition: transform .15s; }
+.legend.min .lg-tog svg { transform: rotate(180deg); }
+
+/* stage toolbar: camera, motion, export */
+.toolbar { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); z-index: 2; display: flex; flex-direction: column; gap: 2px; padding: 5px; }
+.tb { width: 32px; height: 32px; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; padding: 0; transition: background .12s, color .12s; }
+.tb svg { width: 17px; height: 17px; }
+.tb:hover { background: var(--panel-2); color: var(--text); }
+.tb:active { transform: translateY(1px); }
+.tb[aria-pressed="true"] { color: var(--accent); background: color-mix(in srgb, var(--accent) 15%, transparent); }
+.tb-sep { height: 1px; margin: 3px 5px; background: var(--line-2); flex: none; }
+
+.showpanel { position: absolute; top: 12px; left: 12px; z-index: 2; }
+.hints { position: absolute; left: 12px; bottom: 12px; display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 11.5px; color: var(--muted); max-width: calc(100% - 270px); pointer-events: none; }
+.hints span { white-space: nowrap; }
+kbd { font-family: var(--font-ui); font-size: 10.5px; border: 1px solid var(--line-2); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; color: var(--text); background: var(--panel-2); }
+
+.mini { position: absolute; right: 12px; bottom: 12px; width: 236px; padding: 8px 8px 6px; }
+.mini.big { width: min(460px, calc(100% - 24px)); }
+.mini canvas { display: block; width: 100%; aspect-ratio: 1; cursor: crosshair; }
+.mini .cap { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); padding: 0 2px 6px; }
+.mini .cap b { color: var(--text); font-weight: 600; }
+.mini .cap .sp { flex: 1; }
+.mini .icon-btn { width: 22px; height: 22px; font-size: 12px; }
+
+.toast { position: absolute; left: 50%; top: 14px; transform: translate(-50%, -8px); opacity: 0; pointer-events: none; border-radius: 999px; padding: 6px 14px; font-size: 12.5px; transition: opacity .18s, transform .18s; z-index: 6; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.glfail { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; color: var(--muted); pointer-events: none; }
+
+dialog { max-width: min(700px, calc(100vw - 32px)); max-height: calc(100vh - 48px); border: 1px solid var(--card-line); border-radius: 14px; background: var(--panel); color: var(--text); padding: 0; box-shadow: var(--shadow); }
+dialog::backdrop { background: rgba(3, 6, 10, .55); backdrop-filter: blur(3px); }
+.dlg { padding: 18px 22px 20px; overflow: auto; max-height: calc(100vh - 50px); }
+.dlg h2 { margin: 0 0 6px; font-size: 17px; }
+.dlg h3 { margin: 16px 0 6px; font-size: 13.5px; }
+.dlg p { margin: 6px 0; max-width: 70ch; color: var(--text); }
+.dlg .keys { display: grid; grid-template-columns: max-content 1fr; gap: 5px 14px; font-size: 12.5px; }
+.dlg .keys dt { text-align: right; }
+.dlg .keys dd { margin: 0; color: var(--muted); }
+.dlg .close { position: sticky; top: 0; float: right; }
+
+@media (max-width: 860px) {
+  body { overflow: auto; }
+  .app, .app.panel-hidden { grid-template-columns: minmax(0, 1fr); grid-template-rows: 62vh auto; height: auto; }
+  .app.panel-hidden .panel { visibility: visible; }
+  .stage { grid-row: 1; height: 62vh; }
+  .panel { grid-row: 2; border-right: 0; border-top: 1px solid var(--line); overflow: visible; }
+  .brand { position: static; }
+  #collapseBtn, .showpanel { display: none; }
+  .hints { display: none; }
+  .toolbar { left: auto; right: 10px; top: 10px; transform: none; padding: 3px; }
+  .tb { width: 30px; height: 30px; }
+  .mini { width: 136px; padding: 6px 6px 4px; }
+  .mini .cap > span:not(.sp) { display: none; }
+  .legend { left: 10px; right: auto; top: 10px; max-width: calc(100% - 66px); font-size: 11px; padding: 7px 28px 7px 9px; }
+  .legend .rows { gap: 2px; }
+  .legend .map { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="panel" id="panel" aria-label="Controls">
+    <header class="brand">
+      <h1>Elliptic curve <span class="to">→</span> torus</h1>
+      <span class="ver" title="Offline single file, three.js r187">v3.2</span>
+      <span class="sp"></span>
+      <button class="icon-btn" id="themeBtn" title="Switch between dark and paper (T)" aria-label="Switch theme"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="6"/><path d="M8 2a6 6 0 0 0 0 12z" fill="currentColor"/></svg></button>
+      <button class="icon-btn" id="helpBtn" title="How it works and shortcuts (?)" aria-label="Help">?</button>
+      <button class="icon-btn" id="collapseBtn" title="Hide panel (\)" aria-label="Hide panel"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 3 5 8l5 5"/></svg></button>
+    </header>
+
+    <details class="sec" data-sec="curve" open>
+      <summary><svg class="si ic" viewBox="0 0 16 16"><path d="M2.5 13.5C4.2 13.5 5 2.5 8 2.5s3.8 11 5.5 11"/><path d="M1.5 8h13" opacity=".45"/></svg>Curve <span class="aside" id="curveAside"></span></summary>
+      <div class="sec-body">
+        <label class="fld"><span>Preset</span><select id="preset"></select></label>
+        <div class="row2">
+          <label class="fld"><span>a</span><input type="text" id="a" class="mono" spellcheck="false" autocomplete="off"></label>
+          <label class="fld"><span>b</span><input type="text" id="b" class="mono" spellcheck="false" autocomplete="off"></label>
+        </div>
+        <label class="fld"><span>Prime p</span><input type="text" id="p" class="mono" spellcheck="false" autocomplete="off"></label>
+        <p class="err" id="curveErr" role="alert"></p>
+        <dl class="facts" id="facts"></dl>
+      </div>
+    </details>
+
+    <details class="sec" data-sec="points" open>
+      <summary><svg class="si ic" viewBox="0 0 16 16"><circle cx="3.8" cy="11.5" r="1.7"/><circle cx="8" cy="4.5" r="1.7"/><circle cx="12.4" cy="10" r="1.7"/><path d="m5 10 2-4m2.2-.2 2.2 3" opacity=".45"/></svg>Points</summary>
+      <div class="sec-body">
+        <div class="pt">
+          <div class="pt-head"><label for="p1"><i class="sw" style="--c:var(--c-p1)"></i>P₁</label><span class="sp"></span>
+            <button class="icon-btn" data-rand="p1" title="Random point on the curve" aria-label="Random P₁"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><circle cx="5.6" cy="5.6" r=".9" fill="currentColor"/><circle cx="10.4" cy="10.4" r=".9" fill="currentColor"/><circle cx="8" cy="8" r=".9" fill="currentColor"/></svg></button></div>
+          <textarea id="p1" rows="1" spellcheck="false" autocomplete="off" aria-describedby="p1Msg"></textarea>
+          <p class="msg" id="p1Msg"></p>
+        </div>
+        <div class="pt">
+          <div class="pt-head"><label for="p2"><i class="sw" style="--c:var(--c-p2)"></i>P₂</label><span class="sp"></span>
+            <button class="icon-btn" id="negBtn" title="Set P₂ = −P₁, the mirror image" aria-label="Set P₂ to minus P₁"><svg viewBox="0 0 16 16" class="ic"><path d="M2 8h12" stroke-dasharray="1.6 1.6" opacity=".55"/><circle cx="8" cy="4" r="1.7"/><circle cx="8" cy="12" r="1.7"/></svg></button>
+            <button class="icon-btn" data-rand="p2" title="Random point on the curve" aria-label="Random P₂"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><circle cx="5.6" cy="5.6" r=".9" fill="currentColor"/><circle cx="10.4" cy="10.4" r=".9" fill="currentColor"/><circle cx="8" cy="8" r=".9" fill="currentColor"/></svg></button></div>
+          <textarea id="p2" rows="1" spellcheck="false" autocomplete="off" aria-describedby="p2Msg"></textarea>
+          <p class="msg" id="p2Msg"></p>
+        </div>
+        <div class="seg" id="opSeg" role="radiogroup" aria-label="Operation">
+          <button type="button" role="radio" data-op="add">P₁ + P₂</button>
+          <button type="button" role="radio" data-op="sub">P₁ − P₂</button>
+          <button type="button" role="radio" data-op="dbl">2·P₁</button>
+        </div>
+        <div class="pt">
+          <div class="pt-head"><label for="g"><i class="sw ring" style="--c:var(--c-g)"></i>Generator G</label><span class="sp"></span>
+            <label class="chk" title="Draw G on the surface"><input type="checkbox" id="showG"> show</label>
+            <button class="icon-btn" id="resetG" title="Restore the preset's G" aria-label="Restore preset G"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 8a5 5 0 1 0 1.6-3.7"/><path d="M3 2.5v2.8h2.8"/></svg></button></div>
+          <textarea id="g" rows="1" spellcheck="false" autocomplete="off" aria-describedby="gMsg"></textarea>
+          <p class="msg" id="gMsg"></p>
+        </div>
+        <div class="btns">
+          <button class="btn primary" id="plotBtn" title="Re-read every field and redraw (Enter)">Plot</button>
+          <button class="btn" id="stepBtn" title="P₁ ← the result, so the operation runs again from there (N). With P₂ = G it walks the multiples kG">Step ▸</button>
+          <button class="btn" id="swapBtn" title="Swap P₁ and P₂">Swap</button>
+          <button class="btn" id="clearBtn" title="Empty P₁ and P₂">Clear</button>
+        </div>
+        <label class="chk"><input type="checkbox" id="force"> Force group law on off-curve points</label>
+        <p class="hint">Points: SEC hex <code>02/03</code> <code>04</code> <code>06/07</code>, x-only, <code>(x, y)</code>, <code>5G</code>, <code>(n-1)G</code>, <code>λG</code>, <code>O</code>. Every field takes expressions such as <code>2^256 - 2^32 - 977</code>.</p>
+      </div>
+    </details>
+
+    <details class="sec" data-sec="shape" open>
+      <summary><svg class="si ic" viewBox="0 0 16 16"><ellipse cx="8" cy="8.4" rx="6.5" ry="4.2"/><path d="M5.2 8c1.6 1.3 4 1.3 5.6 0M5.9 8.6c1.3-.9 2.9-.9 4.2 0"/></svg>Shape <span class="aside" id="shapeAside"></span></summary>
+      <div class="sec-body">
+        <div class="tiles" id="shape" role="radiogroup" aria-label="Shape" title="S and Shift+S step through the shapes"></div>
+        <p class="hint" id="shapeNote"></p>
+        <label class="slider"><span id="Rlbl">Major R</span><input type="range" id="R" min="0.8" max="2" step="0.01"><output id="Rout"></output></label>
+        <label class="slider" id="rFld"><span id="rlbl">Minor r</span><input type="range" id="r" min="0.15" max="0.75" step="0.01"><output id="rout"></output></label>
+      </div>
+    </details>
+
+    <details class="sec" data-sec="view" open>
+      <summary><svg class="si ic" viewBox="0 0 16 16"><path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2.1"/></svg>Display</summary>
+      <div class="sec-body">
+        <div class="chips" id="showChips">
+          <label class="chip"><input type="checkbox" data-show="grid">Sector grid</label>
+          <label class="chip"><input type="checkbox" data-show="rings">Guide rings</label>
+          <label class="chip"><input type="checkbox" data-show="labels">Labels</label>
+          <label class="chip" title="Every affine point; needs p ≤ 262144"><input type="checkbox" data-show="cloud">All curve points</label>
+          <label class="chip" title="Line through P₁, P₂, the third point R and its mirror"><input type="checkbox" data-show="chord">Chord construction</label>
+          <label class="chip" title="(βx, y) and (β²x, y): needs a = 0 and p ≡ 1 mod 3"><input type="checkbox" data-show="beta">β-orbit</label>
+          <label class="chip"><input type="checkbox" data-show="map">Flat map</label>
+        </div>
+        <div class="fld"><span class="lbl">Guide rings for</span>
+          <div class="chips" id="ringChips">
+            <label class="chip" data-c style="--c:var(--c-p1)"><input type="checkbox" data-ring="p1">P₁</label>
+            <label class="chip" data-c style="--c:var(--c-p2)"><input type="checkbox" data-ring="p2">P₂</label>
+            <label class="chip" data-c style="--c:var(--c-sum)"><input type="checkbox" data-ring="sum">Result</label>
+            <label class="chip" data-c style="--c:var(--c-g)"><input type="checkbox" data-ring="g">G</label>
+          </div>
+        </div>
+        <label class="slider"><span>Glass</span><input type="range" id="glass" min="0" max="1" step="0.01"><output id="glassout"></output></label>
+        <label class="slider"><span>Hidden lines</span><input type="range" id="back" min="0" max="1" step="0.01"><output id="backout"></output></label>
+        <div class="row2">
+          <label class="fld"><span>Angle mapping</span>
+            <select id="map">
+              <option value="scale">Proportional, x / p</option>
+              <option value="low">Low bits window</option>
+              <option value="high">High bits window</option>
+            </select></label>
+          <label class="fld" id="bitsFld"><span>Window bits</span><input type="number" id="bits" min="4" max="52" step="1"></label>
+        </div>
+        <div class="row2">
+          <label class="fld"><span>Grid sectors along x</span><input type="number" id="su" min="4" max="96" step="1"></label>
+          <label class="fld"><span>Grid sectors along y</span><input type="number" id="sv" min="4" max="64" step="1"></label>
+        </div>
+      </div>
+    </details>
+
+    <details class="sec" data-sec="inspector" open>
+      <summary><svg class="si ic" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.6"/><path d="m10.4 10.4 4 4"/></svg>Inspector <span class="aside" id="inspAside"></span></summary>
+      <div class="sec-body"><div id="inspector"></div></div>
+    </details>
+
+    <details class="sec" data-sec="relations" open>
+      <summary><svg class="si ic" viewBox="0 0 16 16"><path d="M2.5 5.5h9l-2.6-2.6M13.5 10.5h-9l2.6 2.6"/></svg>Relations</summary>
+      <div class="sec-body"><div class="rel" id="relations"></div></div>
+    </details>
+
+    <details class="sec" data-sec="test">
+      <summary><svg class="si ic" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.2"/><path d="m5.3 8.2 1.9 1.9 3.6-4"/></svg>Self-test <span class="aside" id="testAside"></span></summary>
+      <div class="sec-body">
+        <p class="hint">Checks the engine against OpenSSL-derived vectors for secp256k1 and P-256, point counts on the toy curves, and the geometry of the shapes.</p>
+        <div class="btns"><button class="btn" id="testBtn">Run self-test</button><button class="btn" id="resetAllBtn" title="Forget saved settings and reload the default view">Reset everything</button></div>
+        <div class="testout" id="testOut"></div>
+      </div>
+    </details>
+
+    <footer class="foot"><span>made with <span class="heart">❤</span> by <a href="https://idlebg.com" target="_blank" rel="noopener">idlebg.com</a></span><span>press <kbd>?</kbd> for keys</span>
+      <nav class="foot-links" aria-label="Project links">
+        <a href="https://github.com/idlebg/EllipticTorus3d" target="_blank" rel="noopener" title="Source code, tests and releases (MIT)"><svg viewBox="0 0 16 16" class="ic"><path d="m5.5 4.5-3.5 3.5 3.5 3.5M10.5 4.5 14 8l-3.5 3.5M9.2 2.8 6.8 13.2"/></svg>Source on GitHub</a>
+        <a href="https://idlebg.com/idleGevrek/" target="_blank" rel="noopener" title="Ready-made states with screenshots and a tour video"><svg viewBox="0 0 16 16" class="ic"><rect x="2" y="2" width="5" height="5" rx="1.2"/><rect x="9" y="2" width="5" height="5" rx="1.2"/><rect x="2" y="9" width="5" height="5" rx="1.2"/><rect x="9" y="9" width="5" height="5" rx="1.2"/></svg>Gallery and tour</a>
+      </nav></footer>
+  </aside>
+
+  <main class="stage" id="stage">
+    <canvas id="gl" aria-label="3D view. Drag to orbit, wheel to zoom, click a point to pin its details."></canvas>
+    <div class="overlay" id="overlay"><svg class="leaders" id="leaders" aria-hidden="true"></svg></div>
+    <div class="legend glass" id="legend"><div class="rows" id="legendRows" aria-live="polite"></div><button class="lg-tog" id="legendTog" title="Compact legend" aria-label="Compact legend" aria-pressed="false"><svg viewBox="0 0 12 12" class="ic"><path d="M3 7.5 6 4.5l3 3"/></svg></button></div>
+    <div class="toolbar glass" id="toolbar" role="toolbar" aria-label="View" aria-orientation="vertical">
+      <button class="tb" data-view="iso" title="Oblique view (1)" aria-label="Oblique view"><svg viewBox="0 0 16 16" class="ic"><path d="M8 1.8 13.5 5v6L8 14.2 2.5 11V5z"/><path d="M2.5 5 8 8.2 13.5 5M8 8.2v6"/></svg></button>
+      <button class="tb" data-view="top" title="Top view (2)" aria-label="Top view"><svg viewBox="0 0 16 16" class="ic"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2.3"/></svg></button>
+      <button class="tb" data-view="side" title="Side view, the mirror plane edge-on (3)" aria-label="Side view"><svg viewBox="0 0 16 16" class="ic"><rect x="1.8" y="5.4" width="12.4" height="5.2" rx="2.6"/><path d="M.6 8h14.8" stroke-dasharray="1.4 1.6" opacity=".55"/></svg></button>
+      <button class="tb" id="resetCam" title="Reset the camera (R)" aria-label="Reset camera"><svg viewBox="0 0 16 16" class="ic"><circle cx="8" cy="8" r="4.6"/><circle cx="8" cy="8" r=".9" fill="currentColor"/><path d="M8 1v2.4M8 12.6V15M1 8h2.4M12.6 8H15"/></svg></button>
+      <span class="tb-sep" role="separator"></span>
+      <button class="tb" id="spinBtn" title="Auto-rotate (Space)" aria-label="Auto-rotate" aria-pressed="false"><svg viewBox="0 0 16 16" class="ic"><path d="M13.4 8.6A5.5 5.5 0 1 1 11.7 4"/><path d="M13.2 1.9v3.4H9.8"/></svg></button>
+      <button class="tb" id="fsBtn" title="Full screen" aria-label="Full screen" aria-pressed="false"><svg viewBox="0 0 16 16" class="ic"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg></button>
+      <span class="tb-sep" role="separator"></span>
+      <button class="tb" id="pngBtn" title="Save the view as PNG" aria-label="Save PNG"><svg viewBox="0 0 16 16" class="ic"><rect x="2" y="3" width="12" height="10" rx="1.6"/><circle cx="6" cy="6.6" r="1.2"/><path d="m2.6 12.2 3.8-3.8 2.8 2.8 1.9-1.9 2.4 2.4"/></svg></button>
+      <button class="tb" id="jsonBtn" title="Export the state and every point as JSON" aria-label="Export JSON"><svg viewBox="0 0 16 16" class="ic"><path d="M5.8 2.5c-1.5 0-2 .7-2 2v1.5c0 1-.5 1.5-1.4 2 .9.5 1.4 1 1.4 2v1.5c0 1.3.5 2 2 2M10.2 2.5c1.5 0 2 .7 2 2v1.5c0 1 .5 1.5 1.4 2-.9.5-1.4 1-1.4 2v1.5c0 1.3-.5 2-2 2"/></svg></button>
+      <button class="tb" id="linkBtn" title="Copy a link that restores this exact state" aria-label="Copy link"><svg viewBox="0 0 16 16" class="ic"><path d="M6.9 9.1a2.6 2.6 0 0 0 3.7 0l2.3-2.3a2.6 2.6 0 0 0-3.7-3.7l-.8.8"/><path d="M9.1 6.9a2.6 2.6 0 0 0-3.7 0L3.1 9.2a2.6 2.6 0 0 0 3.7 3.7l.8-.8"/></svg></button>
+    </div>
+    <button class="icon-btn showpanel" id="showPanelBtn" title="Show panel (\)" aria-label="Show panel" hidden><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3l5 5-5 5"/></svg></button>
+    <div class="mini glass" id="miniWrap">
+      <div class="cap"><b>Flat torus</b><span>x across, y up</span><span class="sp"></span><button class="icon-btn" id="miniSize" title="Enlarge map" aria-label="Enlarge map">⤢</button></div>
+      <canvas id="mini" aria-label="Flat map of the torus: the square [0,p) × [0,p) with opposite edges glued"></canvas>
+    </div>
+    <div class="hints" id="hints"><span><kbd>drag</kbd> orbit</span><span><kbd>right-drag</kbd> pan</span><span><kbd>wheel</kbd> zoom to cursor</span><span><kbd>click</kbd> pin a point</span><span><kbd>dbl-click</kbd> fly to it</span><span><kbd>S</kbd> shape</span><span><kbd>?</kbd> all keys</span></div>
+    <div class="toast glass" id="toast" role="status" aria-live="polite"></div>
+    <div class="glfail" id="glfail" hidden><p>WebGL is unavailable in this browser, so the 3D view cannot start. The curve maths, inspector and flat map still work.</p></div>
+  </main>
+</div>
+
+<dialog id="help" aria-labelledby="helpTitle">
+  <div class="dlg">
+    <button class="icon-btn close" id="helpClose" aria-label="Close">✕</button>
+    <h2 id="helpTitle">How the torus works</h2>
+    <p>Both coordinates of a point on y² = x³ + ax + b live in F<sub>p</sub> = {0, …, p−1} and wrap around at p, so the plane F<sub>p</sub> × F<sub>p</sub> is already a torus. The view wraps x once around the hole (u = 2π·x/p) and y once around the tube (v = 2π·y/p). The flat map is the same square with opposite edges glued.</p>
+    <p>Negation keeps x and sends y to p − y, so −P is the mirror image of P through the equatorial plane. P and −P always share a meridian ring. The point at infinity 𝒪 has no coordinates and is never drawn.</p>
+    <p>The chord through P₁ and P₂ is the line y ≡ λx + c (mod p). On the torus that line winds once around the hole and λ times around the tube (λ taken in (−p/2, p/2]); it meets the curve a third time at R = −(P₁ + P₂), and reflecting R gives the sum. For 256-bit curves the winding is astronomically large, so only the three points and the mirror step are drawn.</p>
+    <p>With a = 0 and p ≡ 1 (mod 3) there is a cube root of unity β, and (x, y) ↦ (βx, y) maps the curve to itself. On secp256k1 that is multiplication by λ, the GLV endomorphism; the three points sharing a y lie on one parallel ring.</p>
+    <p><b>Step</b> (<kbd>N</kbd>) puts the result into P₁, so the operation runs again from there: with P₁ = P₂ = G it walks G, 2G, 3G, … around the surface, and with 2·P₁ it walks the doublings. Scalars stay readable (<code>5G</code>) whenever the page knows them.</p>
+    <h3>Shapes</h3>
+    <p>The Shape section (<kbd>S</kbd>) wraps the same points onto other surfaces, and the surface morphs from one to the next. The lemniscate and trefoil tubes are still tori, bent into a figure-eight or tied into a (2, 3) knot, so everything carries over. A knot is chiral: no mirror maps it onto itself, so on the trefoil −P is P reflected inside its own ring (across the plane of the knot's direction and the torus normal there) rather than through one plane. The cylinder, sphere, ellipsoid, icosahedron and wavy plane cut the torus open at y ≈ p/2: y is centred, so y = 0 lies on the mirror plane and P and −P stay mirror images, but rings and the chord break where they cross the cut. The icosahedron carries the sphere map pushed out radially onto its faces. The Klein bottle closes up in y but glues its x seam with a twist, y ↦ p/2 − y, so lines break there; it has no outside and is drawn from both sides. On the wavy plane negation mirrors through the upright plane along its middle.</p>
+    <h3>Mouse and touch</h3>
+    <dl class="keys">
+      <dt><kbd>drag</kbd></dt><dd>orbit around the axis</dd>
+      <dt><kbd>right-drag</kbd> / <kbd>shift</kbd>+drag</dt><dd>pan</dd>
+      <dt><kbd>wheel</kbd> / pinch</dt><dd>zoom toward the cursor</dd>
+      <dt>hover</dt><dd>details card stays until you hover another point, click empty space or press Esc</dd>
+      <dt><kbd>click</kbd> a point</dt><dd>pin its card (pin as many as you like)</dd>
+      <dt><kbd>dbl-click</kbd> a point</dt><dd>fly to it</dd>
+      <dt>toolbar</dt><dd>views, reset, auto-rotate, full screen, PNG, JSON and a link to this state, on the left of the view</dd>
+    </dl>
+    <h3>Keys</h3>
+    <dl class="keys">
+      <dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></dt><dd>oblique, top and side views</dd>
+      <dt><kbd>R</kbd></dt><dd>reset camera</dd>
+      <dt><kbd>F</kbd></dt><dd>fly to the inspected point</dd>
+      <dt><kbd>Space</kbd></dt><dd>auto-rotate</dd>
+      <dt><kbd>N</kbd></dt><dd>step: P₁ ← the result</dd>
+      <dt><kbd>G</kbd> <kbd>L</kbd> <kbd>C</kbd> <kbd>K</kbd> <kbd>B</kbd> <kbd>M</kbd></dt><dd>grid, labels, curve points, chord, β-orbit, flat map</dd>
+      <dt><kbd>S</kbd> <kbd>Shift</kbd>+<kbd>S</kbd></dt><dd>next or previous shape</dd>
+      <dt><kbd>T</kbd></dt><dd>dark or paper theme</dd>
+      <dt><kbd>\</kbd></dt><dd>hide or show the panel</dd>
+      <dt><kbd>Esc</kbd></dt><dd>drop the hover card, then the pins</dd>
+      <dt><kbd>Enter</kbd> in a field</dt><dd>plot</dd>
+    </dl>
+    <h3>Input formats</h3>
+    <dl class="keys">
+      <dt><code>02…</code> <code>03…</code></dt><dd>compressed SEC (y even / odd)</dd>
+      <dt><code>04…</code></dt><dd>uncompressed SEC; drawn even when off the curve, flagged in red</dd>
+      <dt><code>06…</code> <code>07…</code></dt><dd>hybrid keys, parity bit checked against y</dd>
+      <dt>32-byte hex</dt><dd>x-only (BIP340 lift_x, even y)</dd>
+      <dt><code>(x, y)</code></dt><dd>affine pair, decimal, hex or expressions</dd>
+      <dt><code>5G</code> <code>(n-1)G</code> <code>λG</code></dt><dd>scalar multiples of G; n is the order of G when known</dd>
+      <dt><code>O</code></dt><dd>the point at infinity</dd>
+    </dl>
+    <h3>Power tools</h3>
+    <dl class="keys">
+      <dt>console</dt><dd><code>ecTorus.model</code> is the computed state; <code>ecTorus.engine</code> holds Curve, parsePoint, evalExpr, sqrtMod, dlog and friends; <code>ecTorus.set({ p1: '7G' })</code> drives the page</dd>
+      <dt>URL</dt><dd><code>?lines=thin</code> draws the grid with hairlines (picked automatically on software WebGL), <code>?lines=fat</code> forces thick lines</dd>
+      <dt>Copy link</dt><dd>encodes the whole state after <code>#s=</code>, panel layout included, so a link reopens the exact view</dd>
+    </dl>
+    <h3>Project</h3>
+    <dl class="keys">
+      <dt>source</dt><dd><a href="https://github.com/idlebg/EllipticTorus3d" target="_blank" rel="noopener">github.com/idlebg/EllipticTorus3d</a>: code, tests and releases, MIT licence</dd>
+      <dt>gallery</dt><dd><a href="https://idlebg.com/idleGevrek/" target="_blank" rel="noopener">idlebg.com/idleGevrek</a>: eighteen ready-made states, each opening this page exactly there, and a tour video</dd>
+    </dl>
+  </div>
+</dialog>
+
+<script type="module">
+/*__APP__*/
+</script>
+<!-- three.js r187 (MIT, © 2010-2026 three.js authors), tree-shaken and inlined so this file runs offline from file:// -->
+<script>
+/*__VENDOR__*/
+</script>
+</body>
+</html>

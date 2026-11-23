@@ -1,0 +1,35 @@
+{
+  "name": "ec-torus",
+  "version": "3.2.1",
+  "description": "Points of an elliptic curve over F_p on a torus and eight other shapes: single-file offline visualizer",
+  "homepage": "https://idlebg.com/idleGevrek/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/idlebg/EllipticTorus3d.git"
+  },
+  "bugs": {
+    "url": "https://github.com/idlebg/EllipticTorus3d/issues"
+  },
+  "keywords": ["elliptic-curve", "secp256k1", "torus", "finite-field", "visualization", "three.js", "cryptography", "education"],
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node test/engine.test.mjs && node test/shapes.test.mjs",
+    "e2e": "node test/py.mjs test/interact.py",
+    "e2e:gpu": "node test/py.mjs test/interact.py --gpu",
+    "robust": "node test/py.mjs test/robust.py",
+    "browsers": "node test/py.mjs test/browsers.py",
+    "nowebgl": "node test/py.mjs test/nowebgl.py",
+    "hw": "node test/py.mjs test/hw.py --gpu",
+    "perf": "node test/py.mjs test/perf.py",
+    "shots": "node test/py.mjs test/docs_shots.py",
+    "showcase": "node test/py.mjs test/showcase.py --gpu"
+  },
+  "author": "idlebg.com",
+  "license": "MIT",
+  "private": true,
+  "type": "commonjs",
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "three": "0.187.0"
+  }
+}
