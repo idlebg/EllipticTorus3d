@@ -5,7 +5,9 @@ online at [idlebg.com/idleGevrek](https://idlebg.com/idleGevrek/); `samples/inde
 `elliptic_curve_torus_visualizer_v3.html` next to it. The claims in the captions are checked against the visualizer's own
 computation when the gallery is built (`py -3 test/showcase.py --gpu`); screenshots were taken in Chrome on an RTX 4090.
 
-A short screen recording of the F₂₂₃ sample (auto-rotate, hover cards, a pinned result, paper theme, side view, Step walking the multiples, then every shape morphing into the next): [`tour.webm`](tour.webm).
+A 40-second tour of the F₂₂₃ sample, 1920×1080 (auto-rotate, hover cards, a pinned result, paper theme, side view, Step walking the multiples, then every shape morphing into the next): [`tour.mp4`](tour.mp4).
+
+[![the tour video: the F₂₂₃ chord on the torus with a pinned result](img/tour-poster.jpg)](tour.mp4)
 
 ## secp256k1: G and −G are mirror images
 

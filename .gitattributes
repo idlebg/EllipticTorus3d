@@ -3,7 +3,9 @@
 
 *.png binary
 *.webp binary
+*.jpg binary
 *.webm binary
+*.mp4 binary
 
 # generated files (build.mjs, test/showcase.py, ref.py, npm): left out of GitHub's language statistics and
 # collapsed in diffs, so the repository reads as the JavaScript it is written in

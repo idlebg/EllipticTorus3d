@@ -1,4 +1,4 @@
-"""Build the showcase: samples/index.html (offline gallery), samples/README.md, samples/img/*.png, samples/tour.webm.
+"""Build the showcase: samples/index.html (offline gallery), samples/README.md, samples/img/*.png, and (through test/tour.py) samples/tour.mp4.
 
 Every sample is a `#s=` state link into the visualizer. Before its screenshot is taken, the claims in its caption
 are checked against the live model (the engine is checked against ref.py by test/engine.test.mjs), and the
@@ -6,14 +6,14 @@ reference values used below come from ref_out.json.
 
     py -3 test/showcase.py --gpu        # screenshots on the real GPU (recommended)
     py -3 test/showcase.py              # SwiftShader, with ?lines=fat
-    py -3 test/showcase.py --no-video   # skip the tour recording
+    py -3 test/showcase.py --no-video   # skip the tour video (test/tour.py, about three minutes)
     py -3 test/showcase.py --html-only  # rebuild index.html / README.md from samples/samples.json (no browser)
     ... --site-out=DIR                  # also write DIR/index.html, the gallery as served at https://idlebg.com/idleGevrek/
 
 Three outputs share the samples: samples/index.html opens the visualizer next to the repository (../), the site
 variant opens the copy next to it on idlebg.com, and samples/README.md (read on GitHub) opens the hosted one.
 """
-import sys, json, base64, html, shutil, pathlib
+import sys, json, base64, html, pathlib
 from playwright.sync_api import sync_playwright
 from _launch import ROOT, HTML, GPU, launch, ready
 
@@ -270,31 +270,12 @@ if not HTML_ONLY:
         tp.close()
         print('ok thumbnails', sum(f.stat().st_size for f in THUMB.glob('*.webp')) // 1024, 'KiB')
 
-        # a short tour: auto-rotate, hover, pin, theme switch, flat map (recorded by Playwright, WebM)
-        if '--no-video' not in sys.argv:
-            vdir = OUT / '_video'; vdir.mkdir(exist_ok=True)
-            ctx = b.new_context(viewport={'width': 1280, 'height': 800}, device_scale_factor=1, record_video_dir=str(vdir), record_video_size={'width': 1280, 'height': 800})
-            page = ctx.new_page()
-            tour = next(s for s in SAMPLES if s['id'] == '06-f223-chord')
-            page.goto(HTML.as_uri() + QUERY + '#s=' + tour['link']); ready(page, 1200)
-            page.keyboard.press(' '); page.wait_for_timeout(4500); page.keyboard.press(' '); page.wait_for_timeout(600)
-            for key in ['p1', 'p2', 'r']:
-                p = page.evaluate(f"ecTorus.screenOf('{key}')")
-                page.mouse.move(p['x'], p['y'], steps=25); page.wait_for_timeout(900)
-            p = page.evaluate("ecTorus.screenOf('sum')"); page.mouse.move(p['x'], p['y'], steps=25); page.wait_for_timeout(300)
-            page.mouse.click(p['x'], p['y']); page.wait_for_timeout(1200)
-            page.keyboard.press('t'); page.wait_for_timeout(1500)
-            page.keyboard.press('3'); page.wait_for_timeout(1600)
-            page.keyboard.press('1'); page.wait_for_timeout(1400)
-            for _ in range(4):  # Step: P₁ ← the result, the pinned result card follows
-                page.keyboard.press('n'); page.wait_for_timeout(1100)
-            for _ in range(len(page.evaluate("[...document.querySelectorAll('#shape input')].map(i => i.value)"))):  # every shape, back to the torus
-                page.keyboard.press('s'); page.wait_for_timeout(1500)
-            page.evaluate('localStorage.clear()')
-            video = page.video.path(); ctx.close()
-            shutil.move(video, OUT / 'tour.webm'); shutil.rmtree(vdir, ignore_errors=True)
-            print('ok tour.webm', (OUT / 'tour.webm').stat().st_size // 1024, 'KiB')
         b.close()
+
+    # the tour video: 1920×1080 H.264 MP4 and its poster, made frame by frame by test/tour.py (about three minutes)
+    if '--no-video' not in sys.argv:
+        import subprocess
+        subprocess.run([sys.executable, str(ROOT / 'test' / 'tour.py')], cwd=ROOT, check=True)
 
 # ------------------------------------------------------------------ gallery page and README
 esc = html.escape
@@ -333,8 +314,8 @@ def gallery(app, site):
     cards = '\n'.join(card(s, app) for s in SAMPLES)
     filters = '\n'.join(['    <button class="ft" data-tag="" aria-pressed="true">All <span>%d</span></button>' % len(SAMPLES)]
                         + ['    <button class="ft" data-tag="%s" aria-pressed="false">%s <span>%d</span></button>' % (esc(t), esc(t), counts[t]) for t in TAGS])
-    video = '' if not (OUT / 'tour.webm').exists() else '''  <section class="tour">
-    <video src="tour.webm" poster="img/06-f223-chord.png" controls muted loop playsinline preload="metadata"></video>
+    video = '' if not (OUT / 'tour.mp4').exists() else '''  <section class="tour">
+    <video src="tour.mp4" poster="img/tour-poster.jpg" width="1920" height="1080" controls muted loop playsinline preload="metadata"></video>
     <p>A short tour of the F₂₂₃ sample: auto-rotate, sticky hover cards, a pinned result with its leader line,
     the paper theme, the side view with the mirror plane edge-on, Step walking P₁ through the multiples (key N),
     then every shape in turn (key S), each one morphing out of the last.</p>
@@ -484,9 +465,10 @@ md = ['# Showcase — elliptic curve → torus', '',
       'online at [idlebg.com/idleGevrek](%s); `samples/index.html` is the same gallery offline, opening the' % SITE_URL,
       '`elliptic_curve_torus_visualizer_v3.html` next to it. The claims in the captions are checked against the visualizer\'s own',
       'computation when the gallery is built (`py -3 test/showcase.py --gpu`); screenshots were taken in Chrome on an RTX 4090.', '']
-if (OUT / 'tour.webm').exists():
-    md += ['A short screen recording of the F₂₂₃ sample (auto-rotate, hover cards, a pinned result, paper theme, side view, Step walking the '
-           'multiples, then every shape morphing into the next): [`tour.webm`](tour.webm).', '']
+if (OUT / 'tour.mp4').exists():
+    md += ['A 40-second tour of the F₂₂₃ sample, 1920×1080 (auto-rotate, hover cards, a pinned result, paper theme, side view, Step walking '
+           'the multiples, then every shape morphing into the next): [`tour.mp4`](tour.mp4).', '',
+           '[![the tour video: the F₂₂₃ chord on the torus with a pinned result](img/tour-poster.jpg)](tour.mp4)', '']
 for s in SAMPLES:
     view = '' if s['view'] == '1' else ' Then press `%s` for the %s view.' % (s['view'], VIEW_NAME[s['view']])
     md += ['## ' + s['title'], '', '<img src="img/%s.png" width="720" alt="%s">' % (s['id'], esc(s['title'])), '', s['text'], '',

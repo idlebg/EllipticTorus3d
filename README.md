@@ -144,8 +144,8 @@ Eighteen states with checked captions, online at [idlebg.com/idleGevrek](https:/
 The full set covers secp256k1 (the G / −G mirror, G + 2G = 3G, the GLV endomorphism, 7G − 2G = 5G), P-256, the
 chord winding three times on F₂₂₃, a β-orbit outside ⟨G⟩ on the non-cyclic F₂₂₃, the tangent on F₉₇, discrete logs
 on F₁₇, walking the multiples of G with Step, the input edge cases (a hybrid key with a wrong parity bit, an
-invalid-curve point) and six of the other shapes. The tour video (`samples/tour.webm`) shows auto-rotate, the cards,
-the paper theme, Step and every shape morphing into the next.
+invalid-curve point) and six of the other shapes. The 40-second tour video ([`samples/tour.mp4`](samples/tour.mp4),
+1920×1080) shows auto-rotate, the cards, the paper theme, Step and every shape morphing into the next.
 
 ## Shapes
 

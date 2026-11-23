@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- The tour video is now `samples/tour.mp4`: 1920×1080, 30 fps, H.264, 40 s, 9 MB (it was a 1280×800 WebM).
+  `test/tour.py` makes it frame by frame on a virtual clock, rendered at 2× and scaled down, so motion is even and
+  lines are smooth, with a drawn pointer; the file is checked by decoding it against the captured frames (40–43 dB
+  PSNR). The gallery shows a 16:9 poster frame taken from the video itself.
+
 ## 3.2.1 — 2026-11-23
 
 - Links to the source (https://github.com/idlebg/EllipticTorus3d) and the demo gallery
