@@ -1,0 +1,15 @@
+# dependencies and build intermediates
+node_modules/
+build/
+
+# test output (screenshots, downloads) and Python caches
+shots/
+__pycache__/
+*.pyc
+samples/_video/
+
+# editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

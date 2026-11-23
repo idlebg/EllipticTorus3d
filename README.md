@@ -267,8 +267,9 @@ The maths is checked against an independent reference, never against itself:
 - The 3D view needs WebGL 2 (current Chrome, Edge, Firefox and Safari). It is tested in Chromium, on a software
   renderer and on an RTX 4090, and in WebKit; Firefox has not been through the test suites yet. Without WebGL the
   maths, the inspector and the flat map still work.
-- The page makes no network requests: no CDN, no web fonts, no analytics. Its state stays in your browser's local
-  storage and in the links you choose to copy.
+- The file makes no network requests of its own: no CDN, no web fonts, no analytics. Its state stays in your
+  browser's local storage and in the links you choose to copy. A web host can add to a page it serves (idlebg.com
+  runs behind Cloudflare); the downloaded file is exactly what this repository builds.
 
 ## Build from source
 

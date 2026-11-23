@@ -1,0 +1,14 @@
+# LF everywhere: the build is reproducible byte for byte only with LF sources (Git for Windows would check out CRLF)
+* text=auto eol=lf
+
+*.png binary
+*.webp binary
+*.webm binary
+
+# generated files (build.mjs, test/showcase.py, ref.py, npm): left out of GitHub's language statistics and
+# collapsed in diffs, so the repository reads as the JavaScript it is written in
+elliptic_curve_torus_visualizer_v3.html linguist-generated=true
+samples/index.html linguist-generated=true
+samples/samples.json linguist-generated=true
+ref_out.json linguist-generated=true
+package-lock.json linguist-generated=true
