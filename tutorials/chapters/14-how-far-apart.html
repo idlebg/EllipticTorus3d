@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>14 Two points: how far apart? · Elliptic curve → torus · tutorials</title>
+<meta name="description" content="14 Two points: how far apart?: “02 and 03” read three ways. Tutorials for Elliptic curve → torus, the single-file offline visualizer of elliptic curves over finite fields: how to use it and what it shows, with checked worked examples from first steps to Bitcoin keys and research.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23070b10'/%3E%3Cellipse cx='32' cy='33' rx='23' ry='14' fill='none' stroke='%232de2e6' stroke-width='5'/%3E%3Cpath d='M21 31c6 5 16 5 22 0M24 34c5-3 11-3 16 0' fill='none' stroke='%232de2e6' stroke-width='3.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root { color-scheme: light dark; --bg: #f6f4ee; --panel: #fffdf8; --panel-2: #efece3; --line: #ddd8cb; --text: #1d2530;
+  --muted: #5d6874; --accent: #08797d; --accent-2: #b35c00; --code: #ece8dd; --shadow: 0 1px 2px rgba(0,0,0,.06);
+  --font: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --mono: "Cascadia Mono", "Cascadia Code", Consolas, "SF Mono", Menlo, monospace; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #070b10; --panel: #0b1118; --panel-2: #0f1822; --line: #1c2a37; --text: #d5e1ea; --muted: #8b9cad;
+    --accent: #2de2e6; --accent-2: #ffb547; --code: #111c27; --shadow: none; } }
+* { box-sizing: border-box; }
+html { scroll-padding-top: 12px; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.62 var(--font); }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:hover { text-decoration-thickness: 2px; }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); min-height: 100vh; }
+.side { position: sticky; top: 0; height: 100vh; overflow: auto; padding: 20px 18px 40px; border-right: 1px solid var(--line);
+  background: var(--panel); font-size: 14px; line-height: 1.45; }
+.side .brand { display: block; font-weight: 650; font-size: 15px; color: var(--text); text-decoration: none; margin-bottom: 2px; }
+.side .brand b { color: var(--accent); font-weight: 500; }
+.side .sub { color: var(--muted); font-size: 12.5px; margin: 0 0 12px; }
+.side .links { margin: 0 0 6px; }
+.side h4 { margin: 18px 0 6px; font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.side ol { list-style: none; margin: 0; padding: 0; }
+.side li a { display: flex; gap: 8px; padding: 3px 8px; border-radius: 6px; color: var(--text); text-decoration: none; }
+.side li a span { color: var(--muted); min-width: 1.6em; font-variant-numeric: tabular-nums; }
+.side li a:hover { background: var(--panel-2); }
+.side li a[aria-current] { background: var(--panel-2); color: var(--accent); font-weight: 600; box-shadow: inset 2px 0 0 var(--accent); }
+.side li a:focus-visible { outline-offset: -2px; }
+.side .top a { font-weight: 600; }
+.side details summary { display: none; }
+svg.ic { fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.links { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px 4px 9px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--panel-2); background: color-mix(in srgb, var(--accent) 7%, var(--panel)); color: var(--text);
+  font-size: 12.5px; font-weight: 600; line-height: 1.35; text-decoration: none; white-space: nowrap;
+  transition: color .15s, border-color .15s, background-color .15s; }
+.pill .ic { width: 14px; height: 14px; flex: none; color: var(--accent); }
+.pill:hover { color: var(--accent); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--panel)); }
+.pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 999px; }
+main { padding: 28px clamp(18px, 4vw, 56px) 64px; max-width: 1020px; }
+main > .crumb { color: var(--muted); font-size: 13px; margin-bottom: 6px; }
+h1 { font-size: 30px; line-height: 1.2; margin: 4px 0 14px; letter-spacing: -.01em; }
+h2 { font-size: 22px; margin: 40px 0 10px; padding-top: 14px; border-top: 1px solid var(--line); }
+h3 { font-size: 18px; margin: 30px 0 8px; }
+h4 { font-size: 16px; margin: 22px 0 6px; }
+p, ul, ol, table, pre, blockquote { margin: 10px 0 14px; }
+li { margin: 3px 0; }
+code { font: 0.88em/1.4 var(--mono); background: var(--code); border-radius: 4px; padding: 1px 4px; overflow-wrap: anywhere; }
+pre { background: var(--code); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow: auto; }
+pre code { background: none; padding: 0; overflow-wrap: normal; }
+kbd { font: 12.5px var(--mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; display: block; overflow-x: auto; }
+th, td { border: 1px solid var(--line); padding: 6px 9px; text-align: left; vertical-align: top; }
+th { background: var(--panel-2); font-weight: 600; }
+td code { overflow-wrap: anywhere; }
+blockquote { border-left: 3px solid var(--accent); margin-left: 0; padding: 2px 14px; color: var(--muted); background: var(--panel); border-radius: 0 6px 6px 0; }
+img { max-width: 100%; height: auto; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 28px 0; }
+.example { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 12px 16px 6px; margin: 14px 0 18px; box-shadow: var(--shadow); }
+.example > p:first-child { margin-top: 2px; }
+.example img { display: block; border-radius: 8px; border: 1px solid var(--line); }
+.example .open a { display: inline-block; background: var(--accent); color: var(--bg); font-weight: 650; text-decoration: none; border-radius: 7px; padding: 5px 12px; }
+.example .open a:hover { filter: brightness(1.1); }
+.example .open a:focus-visible { outline-offset: 3px; }
+.example ol { font-size: 15px; }
+.example table { font-size: 14px; }
+.pn { display: flex; justify-content: space-between; gap: 14px; margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); }
+.pn a { display: block; max-width: 48%; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; text-decoration: none; background: var(--panel); }
+.pn a small { display: block; color: var(--muted); font-size: 12px; }
+.pn a.next { margin-left: auto; text-align: right; }
+.pn a:focus-visible { border-radius: 10px; }
+footer.foot { color: var(--muted); font-size: 12.5px; margin-top: 30px; padding-top: 14px; border-top: 1px solid var(--line); }
+footer.foot p { margin: 0 0 10px; }
+.toc-inline { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 16px; font-size: 14.5px; }
+/* all-examples page: filters by level without script (radio buttons + sibling selectors) */
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 18px; }
+.filters input { position: absolute; opacity: 0; pointer-events: none; }
+.filters label { border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; cursor: pointer; font-size: 14px; background: var(--panel); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.card { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); overflow: hidden; display: flex; flex-direction: column; }
+.card img { display: block; width: 100%; aspect-ratio: 1068 / 900; object-fit: cover; border-bottom: 1px solid var(--line); }
+.card .b { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.card h3 { margin: 0; font-size: 15px; }
+.card .meta { color: var(--muted); font-size: 12.5px; }
+.card .acts { margin-top: auto; display: flex; gap: 12px; font-size: 14px; }
+#f-all:checked ~ .filters label[for="f-all"], #f-1:checked ~ .filters label[for="f-1"], #f-2:checked ~ .filters label[for="f-2"],
+#f-3:checked ~ .filters label[for="f-3"], #f-4:checked ~ .filters label[for="f-4"], #f-9:checked ~ .filters label[for="f-9"] {
+  background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
+#f-all:focus-visible ~ .filters label[for="f-all"], #f-1:focus-visible ~ .filters label[for="f-1"], #f-2:focus-visible ~ .filters label[for="f-2"],
+#f-3:focus-visible ~ .filters label[for="f-3"], #f-4:focus-visible ~ .filters label[for="f-4"], #f-9:focus-visible ~ .filters label[for="f-9"] {
+  outline: 2px solid var(--accent); outline-offset: 2px; }
+#f-1:checked ~ .grid .card:not(.l1), #f-2:checked ~ .grid .card:not(.l2), #f-3:checked ~ .grid .card:not(.l3),
+#f-4:checked ~ .grid .card:not(.l4), #f-9:checked ~ .grid .card:not(.l9) { display: none; }
+.radios { position: absolute; opacity: 0; pointer-events: none; }
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .side { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+  .side details summary { display: block; cursor: pointer; color: var(--accent); font-weight: 600; margin: 6px 0; }
+  .side details:not([open]) > ol, .side details:not([open]) > h4 { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .pill { transition: none; } }
+@media print { .side, .pn, .foot .links { display: none; } .layout { display: block; } main { max-width: none; } }
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="side" aria-label="Contents">
+<a class="brand" href="../index.html">Elliptic curve <b>→</b> torus</a>
+<p class="sub">Tutorials for the visualizer v3.2.2. Offline; nothing is loaded from the network.</p>
+<div class="links"><a class="pill" href="https://github.com/idlebg/EllipticTorus3d" target="_blank" rel="noopener" title="Source code, tests and releases (MIT)"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><path d="m5.5 4.5-3.5 3.5 3.5 3.5M10.5 4.5 14 8l-3.5 3.5M9.2 2.8 6.8 13.2"/></svg>Source on GitHub</a><a class="pill" href="https://idlebg.com/idleGevrek/" target="_blank" rel="noopener" title="Ready-made states with screenshots and a tour video"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1.2"/><rect x="9" y="2" width="5" height="5" rx="1.2"/><rect x="2" y="9" width="5" height="5" rx="1.2"/><rect x="9" y="9" width="5" height="5" rx="1.2"/></svg>Gallery and tour</a><a class="pill" href="https://idlebg.com/idleGevrek/tutorials/" target="_blank" rel="noopener" title="These tutorials on idlebg.com"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><path d="M8 4.5C6.6 3.4 4.6 3 2.5 3.2v9c2.1-.2 4.1.2 5.5 1.3 1.4-1.1 3.4-1.5 5.5-1.3v-9C11.4 3 9.4 3.4 8 4.5zM8 4.5v9"/></svg>Tutorials online</a></div>
+<details open><summary>Contents</summary>
+<ol class="top"><li><a href="../index.html"><span>·</span>Start page</a></li><li><a href="../examples.html"><span>·</span>All examples</a></li></ol>
+<h4>Level 1 · Explorer</h4><ol>
+<li><a href="11-start-here.html"><span>11</span>Start here</a></li>
+<li><a href="12-cloud-of-dots.html"><span>12</span>A curve is a cloud of dots</a></li>
+<li><a href="13-why-a-donut.html"><span>13</span>Why a donut</a></li>
+<li><a href="14-how-far-apart.html" aria-current="page"><span>14</span>Two points: how far apart?</a></li>
+<li><a href="15-mirror-images.html"><span>15</span>Mirror images: 02 and 03</a></li>
+<li><a href="16-nine-shapes.html"><span>16</span>One set of points, nine shapes</a></li>
+<li><a href="17-save-share-export.html"><span>17</span>Save, share, export</a></li>
+<li><a href="18-make-it-look-right.html"><span>18</span>Make it look right</a></li>
+</ol>
+<h4>Level 2 · Learner</h4><ol>
+<li><a href="21-clock-arithmetic.html"><span>21</span>Clock arithmetic and the curve equation</a></li>
+<li><a href="22-counting-points.html"><span>22</span>Counting points</a></li>
+<li><a href="23-negation.html"><span>23</span>Negation</a></li>
+<li><a href="24-chord.html"><span>24</span>Adding points: the chord</a></li>
+<li><a href="25-tangent.html"><span>25</span>Doubling: the tangent</a></li>
+<li><a href="26-subtraction.html"><span>26</span>Subtraction</a></li>
+<li><a href="27-walking-multiples.html"><span>27</span>Walking the multiples</a></li>
+<li><a href="28-orders-subgroups.html"><span>28</span>Orders and subgroups</a></li>
+<li><a href="29-discrete-logs.html"><span>29</span>Discrete logs on toy curves</a></li>
+</ol>
+<h4>Level 3 · Bitcoiner</h4><ol>
+<li><a href="31-secp256k1.html"><span>31</span>secp256k1 in the panel</a></li>
+<li><a href="32-private-to-public.html"><span>32</span>Private key → public key</a></li>
+<li><a href="33-key-formats.html"><span>33</span>Key formats</a></li>
+<li><a href="34-parity-taproot.html"><span>34</span>Parity, 02/03 and Taproot</a></li>
+<li><a href="35-glv.html"><span>35</span>The GLV endomorphism</a></li>
+<li><a href="36-invalid-points.html"><span>36</span>Invalid points</a></li>
+<li><a href="37-points-in-bitcoin.html"><span>37</span>Where points appear in Bitcoin</a></li>
+<li><a href="39-p256.html"><span>39</span>P-256 next to secp256k1</a></li>
+</ol>
+<h4>Level 4 · Researcher</h4><ol>
+<li><a href="41-mapping.html"><span>41</span>The mapping</a></li>
+<li><a href="42-group-structure.html"><span>42</span>Group structure</a></li>
+<li><a href="43-j-zero.html"><span>43</span>j = 0 and its automorphisms</a></li>
+<li><a href="44-twists.html"><span>44</span>Quadratic twists</a></li>
+<li><a href="45-invalid-curve-attacks.html"><span>45</span>Invalid-curve attacks</a></li>
+<li><a href="46-singular-composite.html"><span>46</span>Singular curves and composite moduli</a></li>
+<li><a href="47-shapes-topology.html"><span>47</span>Shapes as topology</a></li>
+<li><a href="48-scripting.html"><span>48</span>Scripting with ecTorus</a></li>
+<li><a href="49-trusting-numbers.html"><span>49</span>Trusting the numbers</a></li>
+</ol>
+<h4>Reference</h4><ol>
+<li><a href="91-cookbook.html"><span>91</span>Cookbook</a></li>
+<li><a href="92-exercises.html"><span>92</span>Exercises</a></li>
+<li><a href="93-answers.html"><span>93</span>Answers to the exercises</a></li>
+<li><a href="94-glossary.html"><span>94</span>Glossary</a></li>
+<li><a href="95-faq.html"><span>95</span>FAQ and troubleshooting</a></li>
+<li><a href="96-for-teachers.html"><span>96</span>For teachers</a></li>
+</ol>
+</details>
+</nav>
+<main>
+<div class="crumb">Level 1 · Explorer · chapter 14</div>
+<h1 id="14-two-points-how-far-apart">14 Two points: how far apart?</h1>
+<p><strong>Level 1 · Explorer.</strong> You will learn how to put two points on the donut and read how far apart they are, and why
+“02 and 03” can mean three quite different things. Read first: <a href="11-start-here.html">11 Start here</a> and
+<a href="13-why-a-donut.html">13 Why a donut</a>.</p>
+<p>The idea fits in one sentence: type one point into <strong>P₁</strong> and another into <strong>P₂</strong>, and the visualizer draws both on
+the donut (the <a href="94-glossary.html#torus">torus</a>) and measures how far apart they are, once around the hole and once
+around the tube. You can then switch to a sphere, or to any of the other shapes, and see the same two points there.</p>
+<p>The catch is in what you type. Suppose someone says “put 02 and 03 in P₁ and P₂”. That can mean three things, and
+the visualizer gives three different pictures:</p>
+<table>
+<thead>
+<tr>
+<th>what “02 and 03” means</th>
+<th>what to type</th>
+<th>what you see</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>the <a href="94-glossary.html#private-key">private keys</a> 2 and 3</td>
+<td><code>2G</code> and <code>3G</code></td>
+<td>two unrelated points (<a href="#reading-1-private-keys-2-and-3">reading 1</a>)</td>
+</tr>
+<tr>
+<td>a key that starts with <code>02</code> and the same key with <code>03</code></td>
+<td><code>02</code> + x and <code>03</code> + the same x</td>
+<td>a point and its mirror image (<a href="#reading-2-the-prefixes-02-and-03">reading 2</a>)</td>
+</tr>
+<tr>
+<td>literally the two characters <code>02</code> and <code>03</code></td>
+<td><code>02</code> and <code>03</code></td>
+<td>refused on Bitcoin’s curve; two small points on a toy curve (<a href="#reading-3-literally-02-and-03">reading 3</a>)</td>
+</tr>
+</tbody>
+</table>
+<p>This chapter shows all three.</p>
+<h2 id="how-the-visualizer-measures-how-far">How the visualizer measures “how far”</h2>
+<p>The donut has two directions, and the visualizer measures the distance in each one separately:</p>
+<ul>
+<li><strong>Δu</strong> (“delta u”) is how far apart the two points are <strong>around the hole</strong>. It comes from their x coordinates.</li>
+<li><strong>Δv</strong> is how far apart they are <strong>around the tube</strong>. It comes from their y coordinates.</li>
+</ul>
+<p>Both are angles, from 0° (same place) to 180° (opposite sides). The visualizer always takes the shorter way round,
+like the shorter way between two hours on a clock. You find them in the <strong>Relations</strong> section of the panel, in the
+row <strong>Δu, Δv</strong>, first in degrees and then in radians.</p>
+<p>Each point’s own position is on its card: hover a point to see its card, click it to pin the card. The row <strong>u, v</strong>
+gives the angle around the hole and the angle around the tube, measured from x = 0 and y = 0.</p>
+<h2 id="reading-1-private-keys-2-and-3">Reading 1: private keys 2 and 3</h2>
+<p>In Bitcoin a private key is just a number, and the public key is that number times a fixed starting point called
+<strong>G</strong>, the <a href="94-glossary.html#generator-g">generator</a>. “Times” here is a special kind of multiplication on the curve,
+which the Level 2 chapters take apart step by step. The visualizer understands this directly: type <code>2G</code> and it
+computes the point 2·G, the public key of private key 2.</p>
+<p>A bare <code>2</code> does not work, because the visualizer reads a number without G as a key written in hexadecimal, and one
+hex digit is not a key (Example 14.6 shows the message).</p>
+<h3 id="example-141-keys-2-and-3-on-secp256k1">Example 14.1 · Keys 2 and 3 on secp256k1</h3>
+<div class="example" id="ex-14-keys-2-3">
+
+<p><a href="../img/14-keys-2-3.webp"><img loading="lazy" decoding="async" alt="secp256k1 on the torus with P₁ = 2G and P₂ = 3G pinned, their guide rings, and the Relations section showing Δu and Δv" src="../img/14-keys-2-3.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoiazEtbmVnIiwiYSI6IjAiLCJiIjoiNyIsInAiOiIyXjI1NiAtIDJeMzIgLSA5NzciLCJnIjoiMDI3OWJlNjY3ZWY5ZGNiYmFjNTVhMDYyOTVjZTg3MGIwNzAyOWJmY2RiMmRjZTI4ZDk1OWYyODE1YjE2ZjgxNzk4IiwicDEiOiIyRyIsInAyIjoiM0ciLCJvcCI6ImFkZCIsInNob3dHIjp0cnVlLCJmb3JjZSI6ZmFsc2UsInNoYXBlIjoidG9ydXMiLCJtYXAiOiJzY2FsZSIsImJpdHMiOjI0LCJzdSI6MjQsInN2IjoxNiwiUiI6MS4yLCJyIjowLjQ2LCJnbGFzcyI6MC41NSwiYmFjayI6MC40LCJzaG93Ijp7ImdyaWQiOnRydWUsInJpbmdzIjp0cnVlLCJsYWJlbHMiOnRydWUsImNsb3VkIjp0cnVlLCJjaG9yZCI6ZmFsc2UsImJldGEiOmZhbHNlLCJtYXAiOnRydWUsInNwaW4iOmZhbHNlfSwicmluZ3MiOnsicDEiOnRydWUsInAyIjp0cnVlLCJzdW0iOmZhbHNlLCJnIjpmYWxzZX0sInRoZW1lIjoiZGFyayIsInBhbmVsIjp0cnVlLCJtaW5pQmlnIjpmYWxzZSwibGVnZW5kTWluIjpmYWxzZSwic2VjcyI6eyJjdXJ2ZSI6dHJ1ZSwicG9pbnRzIjp0cnVlLCJzaGFwZSI6dHJ1ZSwidmlldyI6dHJ1ZSwiaW5zcGVjdG9yIjp0cnVlLCJyZWxhdGlvbnMiOnRydWUsInRlc3QiOmZhbHNlfX0" target="_blank" rel="noopener">2G and 3G on the torus</a></p>
+<p><strong>Do it yourself</strong></p>
+<ol>
+<li>In <strong>Curve</strong>, pick the preset <strong>secp256k1: G and −G (mirror pair)</strong>.</li>
+<li>Type <code>2G</code> in <strong>P₁</strong> and <code>3G</code> in <strong>P₂</strong>.</li>
+<li>In <strong>Display</strong>, turn off <strong>Chord construction</strong> (<strong>K</strong>).</li>
+<li>Under <strong>Guide rings for</strong>, turn off <strong>Result</strong>.</li>
+<li>In the 3D view, click P₁ and P₂ to pin their cards.</li>
+<li>Read the <strong>Relations</strong> section in the panel.</li>
+</ol>
+</div>
+
+<p><strong>Look at:</strong></p>
+<ul>
+<li>the two points with their guide rings: cyan for P₁ = 2G, amber for P₂ = 3G. Each point has two rings through it,
+  one around the tube (its x stays fixed along it) and one around the hole (its y stays fixed);</li>
+<li>the pinned cards: 2G sits at u, v = 278.462°, 37.801° and 3G at 350.423°, 79.538°;</li>
+<li>the Relations row <strong>Δu, Δv</strong>: 71.961° around the hole and 41.737° around the tube. These are exactly the
+  differences of the cards’ angles: 350.423° − 278.462° and 79.538° − 37.801°;</li>
+<li>the green point and the small dashed ring: that is P₁ + P₂ = 5G and a helper point for the addition. Ignore them
+  for now; <a href="24-chord.html">24 Adding points</a> explains them.</li>
+</ul>
+<p><strong>Why:</strong> secp256k1 is the curve Bitcoin uses. Its numbers are 256 bits long, so the visualizer shortens them on the
+cards. In full, the public keys of private keys 2 and 3, as Bitcoin writes them (compressed), are:</p>
+<ul>
+<li>2G: <code>02c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5</code></li>
+<li>3G: <code>02f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9</code></li>
+</ul>
+<p>Both start with <code>02</code>. That is a first hint that the prefix 02 is not a private key; reading 2 explains what it is.</p>
+<h3 id="example-142-the-same-two-keys-on-the-sphere">Example 14.2 · The same two keys on the sphere</h3>
+<div class="example" id="ex-14-keys-2-3-sphere">
+
+<p><a href="../img/14-keys-2-3-sphere.webp"><img loading="lazy" decoding="async" alt="the same 2G and 3G on the sphere, both in the northern half, with their longitude and latitude rings" src="../img/14-keys-2-3-sphere.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoiazEtbmVnIiwiYSI6IjAiLCJiIjoiNyIsInAiOiIyXjI1NiAtIDJeMzIgLSA5NzciLCJnIjoiMDI3OWJlNjY3ZWY5ZGNiYmFjNTVhMDYyOTVjZTg3MGIwNzAyOWJmY2RiMmRjZTI4ZDk1OWYyODE1YjE2ZjgxNzk4IiwicDEiOiIyRyIsInAyIjoiM0ciLCJvcCI6ImFkZCIsInNob3dHIjp0cnVlLCJmb3JjZSI6ZmFsc2UsInNoYXBlIjoic3BoZXJlIiwibWFwIjoic2NhbGUiLCJiaXRzIjoyNCwic3UiOjI0LCJzdiI6MTYsIlIiOjEuMiwiciI6MC40NiwiZ2xhc3MiOjAuNTUsImJhY2siOjAuNCwic2hvdyI6eyJncmlkIjp0cnVlLCJyaW5ncyI6dHJ1ZSwibGFiZWxzIjp0cnVlLCJjbG91ZCI6dHJ1ZSwiY2hvcmQiOmZhbHNlLCJiZXRhIjpmYWxzZSwibWFwIjp0cnVlLCJzcGluIjpmYWxzZX0sInJpbmdzIjp7InAxIjp0cnVlLCJwMiI6dHJ1ZSwic3VtIjpmYWxzZSwiZyI6ZmFsc2V9LCJ0aGVtZSI6ImRhcmsiLCJwYW5lbCI6dHJ1ZSwibWluaUJpZyI6ZmFsc2UsImxlZ2VuZE1pbiI6ZmFsc2UsInNlY3MiOnsiY3VydmUiOnRydWUsInBvaW50cyI6dHJ1ZSwic2hhcGUiOnRydWUsInZpZXciOnRydWUsImluc3BlY3RvciI6dHJ1ZSwicmVsYXRpb25zIjp0cnVlLCJ0ZXN0IjpmYWxzZX19" target="_blank" rel="noopener">2G and 3G on the sphere</a></p>
+<p><strong>Do it yourself</strong></p>
+<ol>
+<li>In <strong>Curve</strong>, pick the preset <strong>secp256k1: G and −G (mirror pair)</strong>.</li>
+<li>Type <code>2G</code> in <strong>P₁</strong> and <code>3G</code> in <strong>P₂</strong>.</li>
+<li>In <strong>Shape</strong>, pick <strong>Sphere</strong> (or press <strong>S</strong> until it shows).</li>
+<li>In <strong>Display</strong>, turn off <strong>Chord construction</strong> (<strong>K</strong>).</li>
+<li>Under <strong>Guide rings for</strong>, turn off <strong>Result</strong>.</li>
+<li>In the 3D view, click P₁ and P₂ to pin their cards.</li>
+</ol>
+</div>
+
+<p><strong>Look at:</strong> the same two points, now on a ball. On the sphere, x becomes the
+<a href="94-glossary.html#longitude-and-latitude">longitude</a> (the angle around the vertical axis) and y becomes the latitude
+(how far north or south). The rings through each point are now a meridian (a line of longitude) and a circle of
+latitude.</p>
+<p><strong>Why:</strong> the longitudes are the same angles as u on the donut, so the two points are again 71.961° apart around the
+axis. The latitude is where the sphere differs: y = 0 is on the equator, and y climbs to the north pole as it
+approaches half of p. Both keys have a y in the lower half of the range, so both sit in the northern half: 2G at
+latitude 18.9° and 3G at 39.8°, which is 20.869° apart, exactly half of the 41.737° around the tube on the donut.
+Measured along the surface of the ball, the two points are 64.4° apart.</p>
+<p>The sphere is the donut cut open along one ring and closed up at the poles, so going “around the tube” the long way
+is no longer possible there. <a href="16-nine-shapes.html">16 One set of points, nine shapes</a> shows the other shapes.</p>
+<h3 id="example-143-neighbouring-keys-land-far-apart">Example 14.3 · Neighbouring keys land far apart</h3>
+<div class="example" id="ex-14-neighbours">
+
+<p><a href="../img/14-neighbours.webp"><img loading="lazy" decoding="async" alt="secp256k1 with P₁ = 3G and P₂ = 4G pinned, far apart on the torus" src="../img/14-neighbours.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoiazEtbmVnIiwiYSI6IjAiLCJiIjoiNyIsInAiOiIyXjI1NiAtIDJeMzIgLSA5NzciLCJnIjoiMDI3OWJlNjY3ZWY5ZGNiYmFjNTVhMDYyOTVjZTg3MGIwNzAyOWJmY2RiMmRjZTI4ZDk1OWYyODE1YjE2ZjgxNzk4IiwicDEiOiIzRyIsInAyIjoiNEciLCJvcCI6ImFkZCIsInNob3dHIjp0cnVlLCJmb3JjZSI6ZmFsc2UsInNoYXBlIjoidG9ydXMiLCJtYXAiOiJzY2FsZSIsImJpdHMiOjI0LCJzdSI6MjQsInN2IjoxNiwiUiI6MS4yLCJyIjowLjQ2LCJnbGFzcyI6MC41NSwiYmFjayI6MC40LCJzaG93Ijp7ImdyaWQiOnRydWUsInJpbmdzIjp0cnVlLCJsYWJlbHMiOnRydWUsImNsb3VkIjp0cnVlLCJjaG9yZCI6ZmFsc2UsImJldGEiOmZhbHNlLCJtYXAiOnRydWUsInNwaW4iOmZhbHNlfSwicmluZ3MiOnsicDEiOnRydWUsInAyIjp0cnVlLCJzdW0iOmZhbHNlLCJnIjpmYWxzZX0sInRoZW1lIjoiZGFyayIsInBhbmVsIjp0cnVlLCJtaW5pQmlnIjpmYWxzZSwibGVnZW5kTWluIjpmYWxzZSwic2VjcyI6eyJjdXJ2ZSI6dHJ1ZSwicG9pbnRzIjp0cnVlLCJzaGFwZSI6dHJ1ZSwidmlldyI6dHJ1ZSwiaW5zcGVjdG9yIjp0cnVlLCJyZWxhdGlvbnMiOnRydWUsInRlc3QiOmZhbHNlfX0" target="_blank" rel="noopener">3G and 4G</a></p>
+<table>
+<thead>
+<tr>
+<th>P₁</th>
+<th>P₂</th>
+<th>Δu</th>
+<th>Δv</th>
+<th>open</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>1G</code></td>
+<td><code>2G</code></td>
+<td>107.260°</td>
+<td>63.773°</td>
+<td><a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoiazEtbmVnIiwiYSI6IjAiLCJiIjoiNyIsInAiOiIyXjI1NiAtIDJeMzIgLSA5NzciLCJnIjoiMDI3OWJlNjY3ZWY5ZGNiYmFjNTVhMDYyOTVjZTg3MGIwNzAyOWJmY2RiMmRjZTI4ZDk1OWYyODE1YjE2ZjgxNzk4IiwicDEiOiIxRyIsInAyIjoiMkciLCJvcCI6ImFkZCIsInNob3dHIjp0cnVlLCJmb3JjZSI6ZmFsc2UsInNoYXBlIjoidG9ydXMiLCJtYXAiOiJzY2FsZSIsImJpdHMiOjI0LCJzdSI6MjQsInN2IjoxNiwiUiI6MS4yLCJyIjowLjQ2LCJnbGFzcyI6MC41NSwiYmFjayI6MC40LCJzaG93Ijp7ImdyaWQiOnRydWUsInJpbmdzIjp0cnVlLCJsYWJlbHMiOnRydWUsImNsb3VkIjp0cnVlLCJjaG9yZCI6ZmFsc2UsImJldGEiOmZhbHNlLCJtYXAiOnRydWUsInNwaW4iOmZhbHNlfSwicmluZ3MiOnsicDEiOnRydWUsInAyIjp0cnVlLCJzdW0iOmZhbHNlLCJnIjpmYWxzZX0sInRoZW1lIjoiZGFyayIsInBhbmVsIjp0cnVlLCJtaW5pQmlnIjpmYWxzZSwibGVnZW5kTWluIjpmYWxzZSwic2VjcyI6eyJjdXJ2ZSI6dHJ1ZSwicG9pbnRzIjp0cnVlLCJzaGFwZSI6dHJ1ZSwidmlldyI6dHJ1ZSwiaW5zcGVjdG9yIjp0cnVlLCJyZWxhdGlvbnMiOnRydWUsInRlc3QiOmZhbHNlfX0" target="_blank" rel="noopener">open</a></td>
+</tr>
+<tr>
+<td><code>2G</code></td>
+<td><code>3G</code></td>
+<td>71.961°</td>
+<td>41.737°</td>
+<td><a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoiazEtbmVnIiwiYSI6IjAiLCJiIjoiNyIsInAiOiIyXjI1NiAtIDJeMzIgLSA5NzciLCJnIjoiMDI3OWJlNjY3ZWY5ZGNiYmFjNTVhMDYyOTVjZTg3MGIwNzAyOWJmY2RiMmRjZTI4ZDk1OWYyODE1YjE2ZjgxNzk4IiwicDEiOiIyRyIsInAyIjoiM0ciLCJvcCI6ImFkZCIsInNob3dHIjp0cnVlLCJmb3JjZSI6ZmFsc2UsInNoYXBlIjoidG9ydXMiLCJtYXAiOiJzY2FsZSIsImJpdHMiOjI0LCJzdSI6MjQsInN2IjoxNiwiUiI6MS4yLCJyIjowLjQ2LCJnbGFzcyI6MC41NSwiYmFjayI6MC40LCJzaG93Ijp7ImdyaWQiOnRydWUsInJpbmdzIjp0cnVlLCJsYWJlbHMiOnRydWUsImNsb3VkIjp0cnVlLCJjaG9yZCI6ZmFsc2UsImJldGEiOmZhbHNlLCJtYXAiOnRydWUsInNwaW4iOmZhbHNlfSwicmluZ3MiOnsicDEiOnRydWUsInAyIjp0cnVlLCJzdW0iOmZhbHNlLCJnIjpmYWxzZX0sInRoZW1lIjoiZGFyayIsInBhbmVsIjp0cnVlLCJtaW5pQmlnIjpmYWxzZSwibGVnZW5kTWluIjpmYWxzZSwic2VjcyI6eyJjdXJ2ZSI6dHJ1ZSwicG9pbnRzIjp0cnVlLCJzaGFwZSI6dHJ1ZSwidmlldyI6dHJ1ZSwiaW5zcGVjdG9yIjp0cnVlLCJyZWxhdGlvbnMiOnRydWUsInRlc3QiOmZhbHNlfX0" target="_blank" rel="noopener">open</a></td>
+</tr>
+<tr>
+<td><code>3G</code></td>
+<td><code>4G</code></td>
+<td>28.986°</td>
+<td>35.673°</td>
+<td><a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoiazEtbmVnIiwiYSI6IjAiLCJiIjoiNyIsInAiOiIyXjI1NiAtIDJeMzIgLSA5NzciLCJnIjoiMDI3OWJlNjY3ZWY5ZGNiYmFjNTVhMDYyOTVjZTg3MGIwNzAyOWJmY2RiMmRjZTI4ZDk1OWYyODE1YjE2ZjgxNzk4IiwicDEiOiIzRyIsInAyIjoiNEciLCJvcCI6ImFkZCIsInNob3dHIjp0cnVlLCJmb3JjZSI6ZmFsc2UsInNoYXBlIjoidG9ydXMiLCJtYXAiOiJzY2FsZSIsImJpdHMiOjI0LCJzdSI6MjQsInN2IjoxNiwiUiI6MS4yLCJyIjowLjQ2LCJnbGFzcyI6MC41NSwiYmFjayI6MC40LCJzaG93Ijp7ImdyaWQiOnRydWUsInJpbmdzIjp0cnVlLCJsYWJlbHMiOnRydWUsImNsb3VkIjp0cnVlLCJjaG9yZCI6ZmFsc2UsImJldGEiOmZhbHNlLCJtYXAiOnRydWUsInNwaW4iOmZhbHNlfSwicmluZ3MiOnsicDEiOnRydWUsInAyIjp0cnVlLCJzdW0iOmZhbHNlLCJnIjpmYWxzZX0sInRoZW1lIjoiZGFyayIsInBhbmVsIjp0cnVlLCJtaW5pQmlnIjpmYWxzZSwibGVnZW5kTWluIjpmYWxzZSwic2VjcyI6eyJjdXJ2ZSI6dHJ1ZSwicG9pbnRzIjp0cnVlLCJzaGFwZSI6dHJ1ZSwidmlldyI6dHJ1ZSwiaW5zcGVjdG9yIjp0cnVlLCJyZWxhdGlvbnMiOnRydWUsInRlc3QiOmZhbHNlfX0" target="_blank" rel="noopener">open</a></td>
+</tr>
+<tr>
+<td><code>4G</code></td>
+<td><code>5G</code></td>
+<td>105.425°</td>
+<td>170.516°</td>
+<td><a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoiazEtbmVnIiwiYSI6IjAiLCJiIjoiNyIsInAiOiIyXjI1NiAtIDJeMzIgLSA5NzciLCJnIjoiMDI3OWJlNjY3ZWY5ZGNiYmFjNTVhMDYyOTVjZTg3MGIwNzAyOWJmY2RiMmRjZTI4ZDk1OWYyODE1YjE2ZjgxNzk4IiwicDEiOiI0RyIsInAyIjoiNUciLCJvcCI6ImFkZCIsInNob3dHIjp0cnVlLCJmb3JjZSI6ZmFsc2UsInNoYXBlIjoidG9ydXMiLCJtYXAiOiJzY2FsZSIsImJpdHMiOjI0LCJzdSI6MjQsInN2IjoxNiwiUiI6MS4yLCJyIjowLjQ2LCJnbGFzcyI6MC41NSwiYmFjayI6MC40LCJzaG93Ijp7ImdyaWQiOnRydWUsInJpbmdzIjp0cnVlLCJsYWJlbHMiOnRydWUsImNsb3VkIjp0cnVlLCJjaG9yZCI6ZmFsc2UsImJldGEiOmZhbHNlLCJtYXAiOnRydWUsInNwaW4iOmZhbHNlfSwicmluZ3MiOnsicDEiOnRydWUsInAyIjp0cnVlLCJzdW0iOmZhbHNlLCJnIjpmYWxzZX0sInRoZW1lIjoiZGFyayIsInBhbmVsIjp0cnVlLCJtaW5pQmlnIjpmYWxzZSwibGVnZW5kTWluIjpmYWxzZSwic2VjcyI6eyJjdXJ2ZSI6dHJ1ZSwicG9pbnRzIjp0cnVlLCJzaGFwZSI6dHJ1ZSwidmlldyI6dHJ1ZSwiaW5zcGVjdG9yIjp0cnVlLCJyZWxhdGlvbnMiOnRydWUsInRlc3QiOmZhbHNlfX0" target="_blank" rel="noopener">open</a></td>
+</tr>
+<tr>
+<td><code>5G</code></td>
+<td><code>6G</code></td>
+<td>66.898°</td>
+<td>59.907°</td>
+<td><a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoiazEtbmVnIiwiYSI6IjAiLCJiIjoiNyIsInAiOiIyXjI1NiAtIDJeMzIgLSA5NzciLCJnIjoiMDI3OWJlNjY3ZWY5ZGNiYmFjNTVhMDYyOTVjZTg3MGIwNzAyOWJmY2RiMmRjZTI4ZDk1OWYyODE1YjE2ZjgxNzk4IiwicDEiOiI1RyIsInAyIjoiNkciLCJvcCI6ImFkZCIsInNob3dHIjp0cnVlLCJmb3JjZSI6ZmFsc2UsInNoYXBlIjoidG9ydXMiLCJtYXAiOiJzY2FsZSIsImJpdHMiOjI0LCJzdSI6MjQsInN2IjoxNiwiUiI6MS4yLCJyIjowLjQ2LCJnbGFzcyI6MC41NSwiYmFjayI6MC40LCJzaG93Ijp7ImdyaWQiOnRydWUsInJpbmdzIjp0cnVlLCJsYWJlbHMiOnRydWUsImNsb3VkIjp0cnVlLCJjaG9yZCI6ZmFsc2UsImJldGEiOmZhbHNlLCJtYXAiOnRydWUsInNwaW4iOmZhbHNlfSwicmluZ3MiOnsicDEiOnRydWUsInAyIjp0cnVlLCJzdW0iOmZhbHNlLCJnIjpmYWxzZX0sInRoZW1lIjoiZGFyayIsInBhbmVsIjp0cnVlLCJtaW5pQmlnIjpmYWxzZSwibGVnZW5kTWluIjpmYWxzZSwic2VjcyI6eyJjdXJ2ZSI6dHJ1ZSwicG9pbnRzIjp0cnVlLCJzaGFwZSI6dHJ1ZSwidmlldyI6dHJ1ZSwiaW5zcGVjdG9yIjp0cnVlLCJyZWxhdGlvbnMiOnRydWUsInRlc3QiOmZhbHNlfX0" target="_blank" rel="noopener">open</a></td>
+</tr>
+<tr>
+<td><code>6G</code></td>
+<td><code>7G</code></td>
+<td>130.454°</td>
+<td>94.431°</td>
+<td><a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoiazEtbmVnIiwiYSI6IjAiLCJiIjoiNyIsInAiOiIyXjI1NiAtIDJeMzIgLSA5NzciLCJnIjoiMDI3OWJlNjY3ZWY5ZGNiYmFjNTVhMDYyOTVjZTg3MGIwNzAyOWJmY2RiMmRjZTI4ZDk1OWYyODE1YjE2ZjgxNzk4IiwicDEiOiI2RyIsInAyIjoiN0ciLCJvcCI6ImFkZCIsInNob3dHIjp0cnVlLCJmb3JjZSI6ZmFsc2UsInNoYXBlIjoidG9ydXMiLCJtYXAiOiJzY2FsZSIsImJpdHMiOjI0LCJzdSI6MjQsInN2IjoxNiwiUiI6MS4yLCJyIjowLjQ2LCJnbGFzcyI6MC41NSwiYmFjayI6MC40LCJzaG93Ijp7ImdyaWQiOnRydWUsInJpbmdzIjp0cnVlLCJsYWJlbHMiOnRydWUsImNsb3VkIjp0cnVlLCJjaG9yZCI6ZmFsc2UsImJldGEiOmZhbHNlLCJtYXAiOnRydWUsInNwaW4iOmZhbHNlfSwicmluZ3MiOnsicDEiOnRydWUsInAyIjp0cnVlLCJzdW0iOmZhbHNlLCJnIjpmYWxzZX0sInRoZW1lIjoiZGFyayIsInBhbmVsIjp0cnVlLCJtaW5pQmlnIjpmYWxzZSwibGVnZW5kTWluIjpmYWxzZSwic2VjcyI6eyJjdXJ2ZSI6dHJ1ZSwicG9pbnRzIjp0cnVlLCJzaGFwZSI6dHJ1ZSwidmlldyI6dHJ1ZSwiaW5zcGVjdG9yIjp0cnVlLCJyZWxhdGlvbnMiOnRydWUsInRlc3QiOmZhbHNlfX0" target="_blank" rel="noopener">open</a></td>
+</tr>
+<tr>
+<td><code>7G</code></td>
+<td><code>8G</code></td>
+<td>64.314°</td>
+<td>20.556°</td>
+<td><a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoiazEtbmVnIiwiYSI6IjAiLCJiIjoiNyIsInAiOiIyXjI1NiAtIDJeMzIgLSA5NzciLCJnIjoiMDI3OWJlNjY3ZWY5ZGNiYmFjNTVhMDYyOTVjZTg3MGIwNzAyOWJmY2RiMmRjZTI4ZDk1OWYyODE1YjE2ZjgxNzk4IiwicDEiOiI3RyIsInAyIjoiOEciLCJvcCI6ImFkZCIsInNob3dHIjp0cnVlLCJmb3JjZSI6ZmFsc2UsInNoYXBlIjoidG9ydXMiLCJtYXAiOiJzY2FsZSIsImJpdHMiOjI0LCJzdSI6MjQsInN2IjoxNiwiUiI6MS4yLCJyIjowLjQ2LCJnbGFzcyI6MC41NSwiYmFjayI6MC40LCJzaG93Ijp7ImdyaWQiOnRydWUsInJpbmdzIjp0cnVlLCJsYWJlbHMiOnRydWUsImNsb3VkIjp0cnVlLCJjaG9yZCI6ZmFsc2UsImJldGEiOmZhbHNlLCJtYXAiOnRydWUsInNwaW4iOmZhbHNlfSwicmluZ3MiOnsicDEiOnRydWUsInAyIjp0cnVlLCJzdW0iOmZhbHNlLCJnIjpmYWxzZX0sInRoZW1lIjoiZGFyayIsInBhbmVsIjp0cnVlLCJtaW5pQmlnIjpmYWxzZSwibGVnZW5kTWluIjpmYWxzZSwic2VjcyI6eyJjdXJ2ZSI6dHJ1ZSwicG9pbnRzIjp0cnVlLCJzaGFwZSI6dHJ1ZSwidmlldyI6dHJ1ZSwiaW5zcGVjdG9yIjp0cnVlLCJyZWxhdGlvbnMiOnRydWUsInRlc3QiOmZhbHNlfX0" target="_blank" rel="noopener">open</a></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Do it yourself</strong></p>
+<ol>
+<li>In <strong>Curve</strong>, pick the preset <strong>secp256k1: G and −G (mirror pair)</strong>.</li>
+<li>Type <code>3G</code> in <strong>P₁</strong> and <code>4G</code> in <strong>P₂</strong>.</li>
+<li>In <strong>Display</strong>, turn off <strong>Chord construction</strong> (<strong>K</strong>).</li>
+<li>Under <strong>Guide rings for</strong>, turn off <strong>Result</strong>.</li>
+<li>In the 3D view, click P₁ and P₂ to pin their cards.</li>
+<li>Read the <strong>Relations</strong> section in the panel.</li>
+</ol>
+</div>
+
+<p><strong>Look at:</strong> the table. Each row is two neighbouring private keys and how far apart their public keys land, and each
+row opens in the visualizer. The keys go up by one each time; the distances jump around with no pattern: a big step
+around the hole, then a smaller one, then a big one again.</p>
+<p><strong>Why:</strong> this is the most important picture in the chapter. Where kG lands tells you nothing about k. If neighbouring
+keys landed next to each other, you could find a private key by walking along the curve from G until you reached the
+public key. They do not, and the number of possible keys is about 1.158 × 10⁷⁷, so walking is hopeless. That is the
+<a href="94-glossary.html#discrete-logarithm">discrete logarithm problem</a> that Bitcoin’s security rests on;
+<a href="29-discrete-logs.html">29 Discrete logs on toy curves</a> shows it on curves small enough to solve.</p>
+<h3 id="example-144-keys-2-and-3-on-a-small-curve">Example 14.4 · Keys 2 and 3 on a small curve</h3>
+<p>The same experiment on a toy curve with small numbers: y² = x³ + 7 over F₂₂₃ (the curve of the book <em>Programming
+Bitcoin</em>). Its G is (47, 71). The curve has 252 points, counting the special point at infinity, and every one of them
+except that special point is drawn as a dot.</p>
+<div class="example" id="ex-14-toy-keys-2-3">
+
+<p><a href="../img/14-toy-keys-2-3.webp"><img loading="lazy" decoding="async" alt="the F₂₂₃ curve with every point drawn, P₁ = 2G = (36, 111) and P₂ = 3G = (15, 137) pinned, and the flat map" src="../img/14-toy-keys-2-3.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoicGIyMjMiLCJhIjoiMCIsImIiOiI3IiwicCI6IjIyMyIsImciOiIoNDcsIDcxKSIsInAxIjoiMkciLCJwMiI6IjNHIiwib3AiOiJhZGQiLCJzaG93RyI6dHJ1ZSwiZm9yY2UiOmZhbHNlLCJzaGFwZSI6InRvcnVzIiwibWFwIjoic2NhbGUiLCJiaXRzIjoyNCwic3UiOjI0LCJzdiI6MTYsIlIiOjEuMiwiciI6MC40NiwiZ2xhc3MiOjAuNTUsImJhY2siOjAuNCwic2hvdyI6eyJncmlkIjp0cnVlLCJyaW5ncyI6dHJ1ZSwibGFiZWxzIjp0cnVlLCJjbG91ZCI6dHJ1ZSwiY2hvcmQiOmZhbHNlLCJiZXRhIjpmYWxzZSwibWFwIjp0cnVlLCJzcGluIjpmYWxzZX0sInJpbmdzIjp7InAxIjp0cnVlLCJwMiI6dHJ1ZSwic3VtIjpmYWxzZSwiZyI6ZmFsc2V9LCJ0aGVtZSI6ImRhcmsiLCJwYW5lbCI6dHJ1ZSwibWluaUJpZyI6ZmFsc2UsImxlZ2VuZE1pbiI6ZmFsc2UsInNlY3MiOnsiY3VydmUiOnRydWUsInBvaW50cyI6dHJ1ZSwic2hhcGUiOnRydWUsInZpZXciOnRydWUsImluc3BlY3RvciI6dHJ1ZSwicmVsYXRpb25zIjp0cnVlLCJ0ZXN0IjpmYWxzZX19" target="_blank" rel="noopener">2G and 3G on F₂₂₃</a></p>
+<p><strong>Do it yourself</strong></p>
+<ol>
+<li>In <strong>Curve</strong>, pick the preset <strong>y² = x³ + 7 over F₂₂₃, Programming Bitcoin</strong>.</li>
+<li>Type <code>2G</code> in <strong>P₁</strong> and <code>3G</code> in <strong>P₂</strong>.</li>
+<li>In <strong>Display</strong>, turn off <strong>Chord construction</strong> (<strong>K</strong>).</li>
+<li>Under <strong>Guide rings for</strong>, turn off <strong>Result</strong>.</li>
+<li>In the 3D view, click P₁ and P₂ to pin their cards.</li>
+<li>Read the <strong>Relations</strong> section in the panel.</li>
+</ol>
+</div>
+
+<p><strong>Look at:</strong></p>
+<ul>
+<li>the cards: 2G = (36, 111) and 3G = (15, 137), each with its k;</li>
+<li>the Relations row: Δu = 33.901° and Δv = 41.973°;</li>
+<li>the flat map in the corner: the same two points on a square, with x across and y up. On this curve the numbers are
+  small enough to check by hand: x = 36 is 36/223 of a full turn, which is the u = 58.117° on the card.</li>
+</ul>
+<p><strong>Why:</strong> on a toy curve the visualizer shows every coordinate in ordinary decimal numbers. 2G and 3G still land far
+apart, but here there are only 21 multiples of G, so anyone could list them all. The two cards also tell you how
+Bitcoin would write these points: 2G = (36, 111) has an odd y, so its compressed key is <code>0324</code>, and 3G is <code>030f</code>.
+Keep that in mind for reading 3.</p>
+<h2 id="reading-2-the-prefixes-02-and-03">Reading 2: the prefixes 02 and 03</h2>
+<p>A compressed public key is the x coordinate with a one-byte prefix in front: <code>02</code> when y is even and <code>03</code> when y is
+odd. For every x on the curve there are exactly two points, (x, y) and its mirror image (x, p − y), and one of their
+y values is even and the other odd (secp256k1 has no point with y = 0, the one case where the two would coincide). So <code>02</code> + x and <code>03</code> + the same x are a point and its
+<a href="94-glossary.html#negation">mirror image</a>.</p>
+<h3 id="example-145-02x-and-03x-a-point-and-its-mirror-image">Example 14.5 · 02‖x and 03‖x: a point and its mirror image</h3>
+<p>The visualizer opens with exactly this pair: P₁ is G written as <code>02</code> + x(G), and P₂ is <code>03</code> + x(G).</p>
+<div class="example" id="ex-14-prefix-02-03">
+
+<p><a href="../img/14-prefix-02-03.webp"><img loading="lazy" decoding="async" alt="secp256k1 from the side: P₁ = 02‖x(G) above the mirror plane and P₂ = 03‖x(G) below it, on one meridian ring" src="../img/14-prefix-02-03.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJrMS1uZWciLCJiYXNlUHJlc2V0IjoiazEtbmVnIiwiYSI6IjAiLCJiIjoiNyIsInAiOiIyXjI1NiAtIDJeMzIgLSA5NzciLCJnIjoiMDI3OWJlNjY3ZWY5ZGNiYmFjNTVhMDYyOTVjZTg3MGIwNzAyOWJmY2RiMmRjZTI4ZDk1OWYyODE1YjE2ZjgxNzk4IiwicDEiOiIwMjc5YmU2NjdlZjlkY2JiYWM1NWEwNjI5NWNlODcwYjA3MDI5YmZjZGIyZGNlMjhkOTU5ZjI4MTViMTZmODE3OTgiLCJwMiI6IjAzNzliZTY2N2VmOWRjYmJhYzU1YTA2Mjk1Y2U4NzBiMDcwMjliZmNkYjJkY2UyOGQ5NTlmMjgxNWIxNmY4MTc5OCIsIm9wIjoiYWRkIiwic2hvd0ciOnRydWUsImZvcmNlIjpmYWxzZSwic2hhcGUiOiJ0b3J1cyIsIm1hcCI6InNjYWxlIiwiYml0cyI6MjQsInN1IjoyNCwic3YiOjE2LCJSIjoxLjIsInIiOjAuNDYsImdsYXNzIjowLjU1LCJiYWNrIjowLjQsInNob3ciOnsiZ3JpZCI6dHJ1ZSwicmluZ3MiOnRydWUsImxhYmVscyI6dHJ1ZSwiY2xvdWQiOnRydWUsImNob3JkIjp0cnVlLCJiZXRhIjpmYWxzZSwibWFwIjp0cnVlLCJzcGluIjpmYWxzZX0sInJpbmdzIjp7InAxIjp0cnVlLCJwMiI6dHJ1ZSwic3VtIjp0cnVlLCJnIjpmYWxzZX0sInRoZW1lIjoiZGFyayIsInBhbmVsIjp0cnVlLCJtaW5pQmlnIjpmYWxzZSwibGVnZW5kTWluIjpmYWxzZSwic2VjcyI6eyJjdXJ2ZSI6dHJ1ZSwicG9pbnRzIjp0cnVlLCJzaGFwZSI6dHJ1ZSwidmlldyI6dHJ1ZSwiaW5zcGVjdG9yIjp0cnVlLCJyZWxhdGlvbnMiOnRydWUsInRlc3QiOmZhbHNlfX0" target="_blank" rel="noopener">02‖x and 03‖x, side view</a></p>
+<p><strong>Do it yourself</strong></p>
+<ol>
+<li>In <strong>Curve</strong>, pick the preset <strong>secp256k1: G and −G (mirror pair)</strong>.</li>
+<li>Press <strong>3</strong> for the side view.</li>
+<li>In the 3D view, click P₁ and P₂ to pin their cards.</li>
+<li>Read the <strong>Relations</strong> section in the panel.</li>
+</ol>
+</div>
+
+<p><strong>Look at:</strong></p>
+<ul>
+<li>the side view (key <strong>3</strong>): the faint plane through the middle of the donut is edge-on, and P₁ sits above it while
+  P₂ sits just as far below. They share one ring around the tube;</li>
+<li>the Relations rows: <strong>P₂ = −P₁</strong> says “yes: same x, y ↦ p − y, mirror images”, <strong>same x</strong> says “yes, same meridian
+  ring”, and <strong>Δu, Δv</strong> is 0.000°, 156.853°: no distance at all around the hole, all of it around the tube;</li>
+<li>the cards: G sits at u, v = 171.202°, 101.573° and its mirror at 171.202°, 258.427°;</li>
+<li><strong>P₁ + P₂</strong> in Relations is 𝒪, the point at infinity: a point plus its mirror image gives “nothing”.</li>
+</ul>
+<p><strong>Why:</strong> the private keys of this pair are 1 and n − 1, where n is the number of multiples of G. In full,
+n − 1 = <code>fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140</code> (hex). So the prefixes 02 and 03 do not
+mean “keys 2 and 3” at all: they pick one of two mirror images. <a href="15-mirror-images.html">15 Mirror images</a> explores
+this pair on every shape.</p>
+<h2 id="reading-3-literally-02-and-03">Reading 3: literally 02 and 03</h2>
+<p>What if you type just the two characters?</p>
+<h3 id="example-146-on-secp256k1-refused">Example 14.6 · On secp256k1: refused</h3>
+<div class="example" id="ex-14-literal-secp">
+
+<p><a href="../img/14-literal-secp.webp"><img loading="lazy" decoding="async" alt="the Points section with 02 in P₁ and 03 in P₂, both refused in red" src="../img/14-literal-secp.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoiazEtbmVnIiwiYSI6IjAiLCJiIjoiNyIsInAiOiIyXjI1NiAtIDJeMzIgLSA5NzciLCJnIjoiMDI3OWJlNjY3ZWY5ZGNiYmFjNTVhMDYyOTVjZTg3MGIwNzAyOWJmY2RiMmRjZTI4ZDk1OWYyODE1YjE2ZjgxNzk4IiwicDEiOiIwMiIsInAyIjoiMDMiLCJvcCI6ImFkZCIsInNob3dHIjp0cnVlLCJmb3JjZSI6ZmFsc2UsInNoYXBlIjoidG9ydXMiLCJtYXAiOiJzY2FsZSIsImJpdHMiOjI0LCJzdSI6MjQsInN2IjoxNiwiUiI6MS4yLCJyIjowLjQ2LCJnbGFzcyI6MC41NSwiYmFjayI6MC40LCJzaG93Ijp7ImdyaWQiOnRydWUsInJpbmdzIjp0cnVlLCJsYWJlbHMiOnRydWUsImNsb3VkIjp0cnVlLCJjaG9yZCI6dHJ1ZSwiYmV0YSI6ZmFsc2UsIm1hcCI6dHJ1ZSwic3BpbiI6ZmFsc2V9LCJyaW5ncyI6eyJwMSI6dHJ1ZSwicDIiOnRydWUsInN1bSI6dHJ1ZSwiZyI6ZmFsc2V9LCJ0aGVtZSI6ImRhcmsiLCJwYW5lbCI6dHJ1ZSwibWluaUJpZyI6ZmFsc2UsImxlZ2VuZE1pbiI6ZmFsc2UsInNlY3MiOnsiY3VydmUiOnRydWUsInBvaW50cyI6dHJ1ZSwic2hhcGUiOnRydWUsInZpZXciOnRydWUsImluc3BlY3RvciI6dHJ1ZSwicmVsYXRpb25zIjp0cnVlLCJ0ZXN0IjpmYWxzZX19" target="_blank" rel="noopener">02 and 03 on secp256k1</a></p>
+<table>
+<thead>
+<tr>
+<th>typed in P₁</th>
+<th>the message under P₁</th>
+<th>open</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>2</code></td>
+<td>odd number of hex digits (1)</td>
+<td><a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoiazEtbmVnIiwiYSI6IjAiLCJiIjoiNyIsInAiOiIyXjI1NiAtIDJeMzIgLSA5NzciLCJnIjoiMDI3OWJlNjY3ZWY5ZGNiYmFjNTVhMDYyOTVjZTg3MGIwNzAyOWJmY2RiMmRjZTI4ZDk1OWYyODE1YjE2ZjgxNzk4IiwicDEiOiIyIiwicDIiOiIwMyIsIm9wIjoiYWRkIiwic2hvd0ciOnRydWUsImZvcmNlIjpmYWxzZSwic2hhcGUiOiJ0b3J1cyIsIm1hcCI6InNjYWxlIiwiYml0cyI6MjQsInN1IjoyNCwic3YiOjE2LCJSIjoxLjIsInIiOjAuNDYsImdsYXNzIjowLjU1LCJiYWNrIjowLjQsInNob3ciOnsiZ3JpZCI6dHJ1ZSwicmluZ3MiOnRydWUsImxhYmVscyI6dHJ1ZSwiY2xvdWQiOnRydWUsImNob3JkIjp0cnVlLCJiZXRhIjpmYWxzZSwibWFwIjp0cnVlLCJzcGluIjpmYWxzZX0sInJpbmdzIjp7InAxIjp0cnVlLCJwMiI6dHJ1ZSwic3VtIjp0cnVlLCJnIjpmYWxzZX0sInRoZW1lIjoiZGFyayIsInBhbmVsIjp0cnVlLCJtaW5pQmlnIjpmYWxzZSwibGVnZW5kTWluIjpmYWxzZSwic2VjcyI6eyJjdXJ2ZSI6dHJ1ZSwicG9pbnRzIjp0cnVlLCJzaGFwZSI6dHJ1ZSwidmlldyI6dHJ1ZSwiaW5zcGVjdG9yIjp0cnVlLCJyZWxhdGlvbnMiOnRydWUsInRlc3QiOmZhbHNlfX0" target="_blank" rel="noopener">open</a></td>
+</tr>
+<tr>
+<td><code>02</code></td>
+<td>compressed SEC is 33 bytes for this p (got 1)</td>
+<td><a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoiazEtbmVnIiwiYSI6IjAiLCJiIjoiNyIsInAiOiIyXjI1NiAtIDJeMzIgLSA5NzciLCJnIjoiMDI3OWJlNjY3ZWY5ZGNiYmFjNTVhMDYyOTVjZTg3MGIwNzAyOWJmY2RiMmRjZTI4ZDk1OWYyODE1YjE2ZjgxNzk4IiwicDEiOiIwMiIsInAyIjoiMDMiLCJvcCI6ImFkZCIsInNob3dHIjp0cnVlLCJmb3JjZSI6ZmFsc2UsInNoYXBlIjoidG9ydXMiLCJtYXAiOiJzY2FsZSIsImJpdHMiOjI0LCJzdSI6MjQsInN2IjoxNiwiUiI6MS4yLCJyIjowLjQ2LCJnbGFzcyI6MC41NSwiYmFjayI6MC40LCJzaG93Ijp7ImdyaWQiOnRydWUsInJpbmdzIjp0cnVlLCJsYWJlbHMiOnRydWUsImNsb3VkIjp0cnVlLCJjaG9yZCI6dHJ1ZSwiYmV0YSI6ZmFsc2UsIm1hcCI6dHJ1ZSwic3BpbiI6ZmFsc2V9LCJyaW5ncyI6eyJwMSI6dHJ1ZSwicDIiOnRydWUsInN1bSI6dHJ1ZSwiZyI6ZmFsc2V9LCJ0aGVtZSI6ImRhcmsiLCJwYW5lbCI6dHJ1ZSwibWluaUJpZyI6ZmFsc2UsImxlZ2VuZE1pbiI6ZmFsc2UsInNlY3MiOnsiY3VydmUiOnRydWUsInBvaW50cyI6dHJ1ZSwic2hhcGUiOnRydWUsInZpZXciOnRydWUsImluc3BlY3RvciI6dHJ1ZSwicmVsYXRpb25zIjp0cnVlLCJ0ZXN0IjpmYWxzZX19" target="_blank" rel="noopener">open</a></td>
+</tr>
+<tr>
+<td><code>2G</code></td>
+<td>2·G, on the curve</td>
+<td><a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoiazEtbmVnIiwiYSI6IjAiLCJiIjoiNyIsInAiOiIyXjI1NiAtIDJeMzIgLSA5NzciLCJnIjoiMDI3OWJlNjY3ZWY5ZGNiYmFjNTVhMDYyOTVjZTg3MGIwNzAyOWJmY2RiMmRjZTI4ZDk1OWYyODE1YjE2ZjgxNzk4IiwicDEiOiIyRyIsInAyIjoiMDMiLCJvcCI6ImFkZCIsInNob3dHIjp0cnVlLCJmb3JjZSI6ZmFsc2UsInNoYXBlIjoidG9ydXMiLCJtYXAiOiJzY2FsZSIsImJpdHMiOjI0LCJzdSI6MjQsInN2IjoxNiwiUiI6MS4yLCJyIjowLjQ2LCJnbGFzcyI6MC41NSwiYmFjayI6MC40LCJzaG93Ijp7ImdyaWQiOnRydWUsInJpbmdzIjp0cnVlLCJsYWJlbHMiOnRydWUsImNsb3VkIjp0cnVlLCJjaG9yZCI6dHJ1ZSwiYmV0YSI6ZmFsc2UsIm1hcCI6dHJ1ZSwic3BpbiI6ZmFsc2V9LCJyaW5ncyI6eyJwMSI6dHJ1ZSwicDIiOnRydWUsInN1bSI6dHJ1ZSwiZyI6ZmFsc2V9LCJ0aGVtZSI6ImRhcmsiLCJwYW5lbCI6dHJ1ZSwibWluaUJpZyI6ZmFsc2UsImxlZ2VuZE1pbiI6ZmFsc2UsInNlY3MiOnsiY3VydmUiOnRydWUsInBvaW50cyI6dHJ1ZSwic2hhcGUiOnRydWUsInZpZXciOnRydWUsImluc3BlY3RvciI6dHJ1ZSwicmVsYXRpb25zIjp0cnVlLCJ0ZXN0IjpmYWxzZX19" target="_blank" rel="noopener">open</a></td>
+</tr>
+<tr>
+<td><code>2*G</code></td>
+<td>2·G, on the curve</td>
+<td><a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoiazEtbmVnIiwiYSI6IjAiLCJiIjoiNyIsInAiOiIyXjI1NiAtIDJeMzIgLSA5NzciLCJnIjoiMDI3OWJlNjY3ZWY5ZGNiYmFjNTVhMDYyOTVjZTg3MGIwNzAyOWJmY2RiMmRjZTI4ZDk1OWYyODE1YjE2ZjgxNzk4IiwicDEiOiIyKkciLCJwMiI6IjAzIiwib3AiOiJhZGQiLCJzaG93RyI6dHJ1ZSwiZm9yY2UiOmZhbHNlLCJzaGFwZSI6InRvcnVzIiwibWFwIjoic2NhbGUiLCJiaXRzIjoyNCwic3UiOjI0LCJzdiI6MTYsIlIiOjEuMiwiciI6MC40NiwiZ2xhc3MiOjAuNTUsImJhY2siOjAuNCwic2hvdyI6eyJncmlkIjp0cnVlLCJyaW5ncyI6dHJ1ZSwibGFiZWxzIjp0cnVlLCJjbG91ZCI6dHJ1ZSwiY2hvcmQiOnRydWUsImJldGEiOmZhbHNlLCJtYXAiOnRydWUsInNwaW4iOmZhbHNlfSwicmluZ3MiOnsicDEiOnRydWUsInAyIjp0cnVlLCJzdW0iOnRydWUsImciOmZhbHNlfSwidGhlbWUiOiJkYXJrIiwicGFuZWwiOnRydWUsIm1pbmlCaWciOmZhbHNlLCJsZWdlbmRNaW4iOmZhbHNlLCJzZWNzIjp7ImN1cnZlIjp0cnVlLCJwb2ludHMiOnRydWUsInNoYXBlIjp0cnVlLCJ2aWV3Ijp0cnVlLCJpbnNwZWN0b3IiOnRydWUsInJlbGF0aW9ucyI6dHJ1ZSwidGVzdCI6ZmFsc2V9fQ" target="_blank" rel="noopener">open</a></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Do it yourself</strong></p>
+<ol>
+<li>In <strong>Curve</strong>, pick the preset <strong>secp256k1: G and −G (mirror pair)</strong>.</li>
+<li>Type <code>02</code> in <strong>P₁</strong> and <code>03</code> in <strong>P₂</strong>.</li>
+<li>Read the <strong>Points</strong> section in the panel.</li>
+</ol>
+</div>
+
+<p><strong>Look at:</strong> the red messages under P₁ and P₂, and the table of other things you might type into P₁.</p>
+<p><strong>Why:</strong> the visualizer reads <code>02</code> as the start of a compressed key, and on secp256k1 a compressed key is 33 bytes
+(66 hex digits): the prefix plus a 32-byte x. One byte is not enough, so it says “compressed SEC is 33 bytes for this
+p (got 1)”. A bare <code>2</code> fails even earlier: hex digits come in pairs, so it says “odd number of hex digits (1)”. To
+mean the private key 2, type <code>2G</code> (or <code>2*G</code>).</p>
+<h3 id="example-147-on-f223-two-x-only-keys">Example 14.7 · On F₂₂₃: two x-only keys</h3>
+<p>On the toy curve the same two characters are accepted, but not as keys 2 and 3.</p>
+<div class="example" id="ex-14-literal-f223">
+
+<p><a href="../img/14-literal-f223.webp"><img loading="lazy" decoding="async" alt="F₂₂₃ with P₁ = 02 read as the x-only key (2, 98) and P₂ = 03 read as (3, 82), both with even y, pinned" src="../img/14-literal-f223.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoicGIyMjMiLCJhIjoiMCIsImIiOiI3IiwicCI6IjIyMyIsImciOiIoNDcsIDcxKSIsInAxIjoiMDIiLCJwMiI6IjAzIiwib3AiOiJhZGQiLCJzaG93RyI6dHJ1ZSwiZm9yY2UiOmZhbHNlLCJzaGFwZSI6InRvcnVzIiwibWFwIjoic2NhbGUiLCJiaXRzIjoyNCwic3UiOjI0LCJzdiI6MTYsIlIiOjEuMiwiciI6MC40NiwiZ2xhc3MiOjAuNTUsImJhY2siOjAuNCwic2hvdyI6eyJncmlkIjp0cnVlLCJyaW5ncyI6dHJ1ZSwibGFiZWxzIjp0cnVlLCJjbG91ZCI6dHJ1ZSwiY2hvcmQiOmZhbHNlLCJiZXRhIjpmYWxzZSwibWFwIjp0cnVlLCJzcGluIjpmYWxzZX0sInJpbmdzIjp7InAxIjp0cnVlLCJwMiI6dHJ1ZSwic3VtIjpmYWxzZSwiZyI6ZmFsc2V9LCJ0aGVtZSI6ImRhcmsiLCJwYW5lbCI6dHJ1ZSwibWluaUJpZyI6ZmFsc2UsImxlZ2VuZE1pbiI6ZmFsc2UsInNlY3MiOnsiY3VydmUiOnRydWUsInBvaW50cyI6dHJ1ZSwic2hhcGUiOnRydWUsInZpZXciOnRydWUsImluc3BlY3RvciI6dHJ1ZSwicmVsYXRpb25zIjp0cnVlLCJ0ZXN0IjpmYWxzZX19" target="_blank" rel="noopener">02 and 03 on F₂₂₃</a></p>
+<p><strong>Do it yourself</strong></p>
+<ol>
+<li>In <strong>Curve</strong>, pick the preset <strong>y² = x³ + 7 over F₂₂₃, Programming Bitcoin</strong>.</li>
+<li>Type <code>02</code> in <strong>P₁</strong> and <code>03</code> in <strong>P₂</strong>.</li>
+<li>In <strong>Display</strong>, turn off <strong>Chord construction</strong> (<strong>K</strong>).</li>
+<li>Under <strong>Guide rings for</strong>, turn off <strong>Result</strong>.</li>
+<li>In the 3D view, click P₁ and P₂ to pin their cards.</li>
+<li>Read the <strong>Points</strong> section in the panel.</li>
+</ol>
+</div>
+
+<p><strong>Look at:</strong></p>
+<ul>
+<li>the messages: both points are read as “x-only (BIP340, even y), on the curve”;</li>
+<li>the points: <code>02</code> became (2, 98) and <code>03</code> became (3, 82). They sit close together around the hole (Δu = 1.614°)
+  and 25.830° apart around the tube;</li>
+<li>the cards: each has an <strong>order</strong> of 42 but no k.</li>
+</ul>
+<p><strong>Why:</strong> on F₂₂₃ every coordinate fits in one byte, so a one-byte hex string has exactly the length of an
+<a href="94-glossary.html#x-only-key">x-only key</a>: just the x coordinate, with the even y implied, the way Taproot writes keys.
+So <code>02</code> means “the point with x = 2 and even y”, which is (2, 98), and <code>03</code> means (3, 82). They are not mirror images
+(their x values differ), and they are not 2G and 3G either, which were (36, 111) and (15, 137). In fact they are not
+multiples of G at all: G has order 21, so all its multiples have an order that divides 21, while these two have
+order 42. That is why their cards show no k. A compressed key on this curve is two bytes: <code>0324</code> is 2G, and <code>0224</code> is
+its mirror image −2G.</p>
+<h2 id="try-it-yourself">Try it yourself</h2>
+<ul>
+<li>In Example 14.1, press <strong>S</strong> a few times to see 2G and 3G on the cylinder, the trefoil knot and the Klein bottle.
+  Δu and Δv in Relations do not change: they are measured on the donut, whatever shape is drawn.</li>
+<li>Type <code>1G</code> and <code>(n-1)G</code>. Relations says they are mirror images, like Example 14.5.</li>
+<li>Click the dice button next to P₁ or P₂ for a random point, and watch Δu and Δv.</li>
+<li>On F₂₂₃, type <code>0324</code> and <code>0224</code>, then <code>24</code> alone. Which one is 2G?</li>
+</ul>
+<h2 id="recap">Recap</h2>
+<ul>
+<li>Δu (around the hole, from x) and Δv (around the tube, from y) in <strong>Relations</strong> say how far apart P₁ and P₂ are.</li>
+<li>Keys 2 and 3 are typed <code>2G</code> and <code>3G</code>; their public keys land far apart, and neighbouring keys show no pattern.</li>
+<li>The prefixes 02 and 03 pick one of two mirror images; literally <code>02</code> and <code>03</code> are refused on secp256k1 and read as
+  x-only keys on a curve with p below 256.</li>
+</ul>
+<p>Next: <a href="15-mirror-images.html">15 Mirror images: 02 and 03</a>.</p>
+<nav class="pn" aria-label="Previous and next"><a class="prev" href="13-why-a-donut.html"><small>← previous</small>13 · Why a donut</a><a class="next" href="15-mirror-images.html"><small>next →</small>15 · Mirror images: 02 and 03</a></nav>
+<footer class="foot"><p>Tutorials for <i>Elliptic curve → torus</i> v3.2.2, the single-file visualizer by Idle (idlebg.com). Every example link opens the visualizer at the top of the repository.</p>
+<nav class="links" aria-label="Project links"><a class="pill" href="https://github.com/idlebg/EllipticTorus3d" target="_blank" rel="noopener" title="Source code, tests and releases (MIT)"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><path d="m5.5 4.5-3.5 3.5 3.5 3.5M10.5 4.5 14 8l-3.5 3.5M9.2 2.8 6.8 13.2"/></svg>Source on GitHub</a><a class="pill" href="https://idlebg.com/idleGevrek/" target="_blank" rel="noopener" title="Ready-made states with screenshots and a tour video"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1.2"/><rect x="9" y="2" width="5" height="5" rx="1.2"/><rect x="2" y="9" width="5" height="5" rx="1.2"/><rect x="9" y="9" width="5" height="5" rx="1.2"/></svg>Gallery and tour</a><a class="pill" href="https://idlebg.com/idleGevrek/tutorials/" target="_blank" rel="noopener" title="These tutorials on idlebg.com"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><path d="M8 4.5C6.6 3.4 4.6 3 2.5 3.2v9c2.1-.2 4.1.2 5.5 1.3 1.4-1.1 3.4-1.5 5.5-1.3v-9C11.4 3 9.4 3.4 8 4.5zM8 4.5v9"/></svg>Tutorials online</a></nav></footer>
+</main>
+</div>
+</body>
+</html>

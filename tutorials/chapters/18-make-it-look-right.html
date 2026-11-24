@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>18 Make it look right · Elliptic curve → torus · tutorials</title>
+<meta name="description" content="18 Make it look right: theme, sizes, glass, grid, labels. Tutorials for Elliptic curve → torus, the single-file offline visualizer of elliptic curves over finite fields: how to use it and what it shows, with checked worked examples from first steps to Bitcoin keys and research.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23070b10'/%3E%3Cellipse cx='32' cy='33' rx='23' ry='14' fill='none' stroke='%232de2e6' stroke-width='5'/%3E%3Cpath d='M21 31c6 5 16 5 22 0M24 34c5-3 11-3 16 0' fill='none' stroke='%232de2e6' stroke-width='3.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root { color-scheme: light dark; --bg: #f6f4ee; --panel: #fffdf8; --panel-2: #efece3; --line: #ddd8cb; --text: #1d2530;
+  --muted: #5d6874; --accent: #08797d; --accent-2: #b35c00; --code: #ece8dd; --shadow: 0 1px 2px rgba(0,0,0,.06);
+  --font: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --mono: "Cascadia Mono", "Cascadia Code", Consolas, "SF Mono", Menlo, monospace; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #070b10; --panel: #0b1118; --panel-2: #0f1822; --line: #1c2a37; --text: #d5e1ea; --muted: #8b9cad;
+    --accent: #2de2e6; --accent-2: #ffb547; --code: #111c27; --shadow: none; } }
+* { box-sizing: border-box; }
+html { scroll-padding-top: 12px; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.62 var(--font); }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:hover { text-decoration-thickness: 2px; }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); min-height: 100vh; }
+.side { position: sticky; top: 0; height: 100vh; overflow: auto; padding: 20px 18px 40px; border-right: 1px solid var(--line);
+  background: var(--panel); font-size: 14px; line-height: 1.45; }
+.side .brand { display: block; font-weight: 650; font-size: 15px; color: var(--text); text-decoration: none; margin-bottom: 2px; }
+.side .brand b { color: var(--accent); font-weight: 500; }
+.side .sub { color: var(--muted); font-size: 12.5px; margin: 0 0 12px; }
+.side .links { margin: 0 0 6px; }
+.side h4 { margin: 18px 0 6px; font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.side ol { list-style: none; margin: 0; padding: 0; }
+.side li a { display: flex; gap: 8px; padding: 3px 8px; border-radius: 6px; color: var(--text); text-decoration: none; }
+.side li a span { color: var(--muted); min-width: 1.6em; font-variant-numeric: tabular-nums; }
+.side li a:hover { background: var(--panel-2); }
+.side li a[aria-current] { background: var(--panel-2); color: var(--accent); font-weight: 600; box-shadow: inset 2px 0 0 var(--accent); }
+.side li a:focus-visible { outline-offset: -2px; }
+.side .top a { font-weight: 600; }
+.side details summary { display: none; }
+svg.ic { fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.links { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px 4px 9px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--panel-2); background: color-mix(in srgb, var(--accent) 7%, var(--panel)); color: var(--text);
+  font-size: 12.5px; font-weight: 600; line-height: 1.35; text-decoration: none; white-space: nowrap;
+  transition: color .15s, border-color .15s, background-color .15s; }
+.pill .ic { width: 14px; height: 14px; flex: none; color: var(--accent); }
+.pill:hover { color: var(--accent); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--panel)); }
+.pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 999px; }
+main { padding: 28px clamp(18px, 4vw, 56px) 64px; max-width: 1020px; }
+main > .crumb { color: var(--muted); font-size: 13px; margin-bottom: 6px; }
+h1 { font-size: 30px; line-height: 1.2; margin: 4px 0 14px; letter-spacing: -.01em; }
+h2 { font-size: 22px; margin: 40px 0 10px; padding-top: 14px; border-top: 1px solid var(--line); }
+h3 { font-size: 18px; margin: 30px 0 8px; }
+h4 { font-size: 16px; margin: 22px 0 6px; }
+p, ul, ol, table, pre, blockquote { margin: 10px 0 14px; }
+li { margin: 3px 0; }
+code { font: 0.88em/1.4 var(--mono); background: var(--code); border-radius: 4px; padding: 1px 4px; overflow-wrap: anywhere; }
+pre { background: var(--code); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow: auto; }
+pre code { background: none; padding: 0; overflow-wrap: normal; }
+kbd { font: 12.5px var(--mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; display: block; overflow-x: auto; }
+th, td { border: 1px solid var(--line); padding: 6px 9px; text-align: left; vertical-align: top; }
+th { background: var(--panel-2); font-weight: 600; }
+td code { overflow-wrap: anywhere; }
+blockquote { border-left: 3px solid var(--accent); margin-left: 0; padding: 2px 14px; color: var(--muted); background: var(--panel); border-radius: 0 6px 6px 0; }
+img { max-width: 100%; height: auto; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 28px 0; }
+.example { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 12px 16px 6px; margin: 14px 0 18px; box-shadow: var(--shadow); }
+.example > p:first-child { margin-top: 2px; }
+.example img { display: block; border-radius: 8px; border: 1px solid var(--line); }
+.example .open a { display: inline-block; background: var(--accent); color: var(--bg); font-weight: 650; text-decoration: none; border-radius: 7px; padding: 5px 12px; }
+.example .open a:hover { filter: brightness(1.1); }
+.example .open a:focus-visible { outline-offset: 3px; }
+.example ol { font-size: 15px; }
+.example table { font-size: 14px; }
+.pn { display: flex; justify-content: space-between; gap: 14px; margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); }
+.pn a { display: block; max-width: 48%; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; text-decoration: none; background: var(--panel); }
+.pn a small { display: block; color: var(--muted); font-size: 12px; }
+.pn a.next { margin-left: auto; text-align: right; }
+.pn a:focus-visible { border-radius: 10px; }
+footer.foot { color: var(--muted); font-size: 12.5px; margin-top: 30px; padding-top: 14px; border-top: 1px solid var(--line); }
+footer.foot p { margin: 0 0 10px; }
+.toc-inline { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 16px; font-size: 14.5px; }
+/* all-examples page: filters by level without script (radio buttons + sibling selectors) */
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 18px; }
+.filters input { position: absolute; opacity: 0; pointer-events: none; }
+.filters label { border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; cursor: pointer; font-size: 14px; background: var(--panel); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.card { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); overflow: hidden; display: flex; flex-direction: column; }
+.card img { display: block; width: 100%; aspect-ratio: 1068 / 900; object-fit: cover; border-bottom: 1px solid var(--line); }
+.card .b { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.card h3 { margin: 0; font-size: 15px; }
+.card .meta { color: var(--muted); font-size: 12.5px; }
+.card .acts { margin-top: auto; display: flex; gap: 12px; font-size: 14px; }
+#f-all:checked ~ .filters label[for="f-all"], #f-1:checked ~ .filters label[for="f-1"], #f-2:checked ~ .filters label[for="f-2"],
+#f-3:checked ~ .filters label[for="f-3"], #f-4:checked ~ .filters label[for="f-4"], #f-9:checked ~ .filters label[for="f-9"] {
+  background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
+#f-all:focus-visible ~ .filters label[for="f-all"], #f-1:focus-visible ~ .filters label[for="f-1"], #f-2:focus-visible ~ .filters label[for="f-2"],
+#f-3:focus-visible ~ .filters label[for="f-3"], #f-4:focus-visible ~ .filters label[for="f-4"], #f-9:focus-visible ~ .filters label[for="f-9"] {
+  outline: 2px solid var(--accent); outline-offset: 2px; }
+#f-1:checked ~ .grid .card:not(.l1), #f-2:checked ~ .grid .card:not(.l2), #f-3:checked ~ .grid .card:not(.l3),
+#f-4:checked ~ .grid .card:not(.l4), #f-9:checked ~ .grid .card:not(.l9) { display: none; }
+.radios { position: absolute; opacity: 0; pointer-events: none; }
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .side { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+  .side details summary { display: block; cursor: pointer; color: var(--accent); font-weight: 600; margin: 6px 0; }
+  .side details:not([open]) > ol, .side details:not([open]) > h4 { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .pill { transition: none; } }
+@media print { .side, .pn, .foot .links { display: none; } .layout { display: block; } main { max-width: none; } }
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="side" aria-label="Contents">
+<a class="brand" href="../index.html">Elliptic curve <b>→</b> torus</a>
+<p class="sub">Tutorials for the visualizer v3.2.2. Offline; nothing is loaded from the network.</p>
+<div class="links"><a class="pill" href="https://github.com/idlebg/EllipticTorus3d" target="_blank" rel="noopener" title="Source code, tests and releases (MIT)"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><path d="m5.5 4.5-3.5 3.5 3.5 3.5M10.5 4.5 14 8l-3.5 3.5M9.2 2.8 6.8 13.2"/></svg>Source on GitHub</a><a class="pill" href="https://idlebg.com/idleGevrek/" target="_blank" rel="noopener" title="Ready-made states with screenshots and a tour video"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1.2"/><rect x="9" y="2" width="5" height="5" rx="1.2"/><rect x="2" y="9" width="5" height="5" rx="1.2"/><rect x="9" y="9" width="5" height="5" rx="1.2"/></svg>Gallery and tour</a><a class="pill" href="https://idlebg.com/idleGevrek/tutorials/" target="_blank" rel="noopener" title="These tutorials on idlebg.com"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><path d="M8 4.5C6.6 3.4 4.6 3 2.5 3.2v9c2.1-.2 4.1.2 5.5 1.3 1.4-1.1 3.4-1.5 5.5-1.3v-9C11.4 3 9.4 3.4 8 4.5zM8 4.5v9"/></svg>Tutorials online</a></div>
+<details open><summary>Contents</summary>
+<ol class="top"><li><a href="../index.html"><span>·</span>Start page</a></li><li><a href="../examples.html"><span>·</span>All examples</a></li></ol>
+<h4>Level 1 · Explorer</h4><ol>
+<li><a href="11-start-here.html"><span>11</span>Start here</a></li>
+<li><a href="12-cloud-of-dots.html"><span>12</span>A curve is a cloud of dots</a></li>
+<li><a href="13-why-a-donut.html"><span>13</span>Why a donut</a></li>
+<li><a href="14-how-far-apart.html"><span>14</span>Two points: how far apart?</a></li>
+<li><a href="15-mirror-images.html"><span>15</span>Mirror images: 02 and 03</a></li>
+<li><a href="16-nine-shapes.html"><span>16</span>One set of points, nine shapes</a></li>
+<li><a href="17-save-share-export.html"><span>17</span>Save, share, export</a></li>
+<li><a href="18-make-it-look-right.html" aria-current="page"><span>18</span>Make it look right</a></li>
+</ol>
+<h4>Level 2 · Learner</h4><ol>
+<li><a href="21-clock-arithmetic.html"><span>21</span>Clock arithmetic and the curve equation</a></li>
+<li><a href="22-counting-points.html"><span>22</span>Counting points</a></li>
+<li><a href="23-negation.html"><span>23</span>Negation</a></li>
+<li><a href="24-chord.html"><span>24</span>Adding points: the chord</a></li>
+<li><a href="25-tangent.html"><span>25</span>Doubling: the tangent</a></li>
+<li><a href="26-subtraction.html"><span>26</span>Subtraction</a></li>
+<li><a href="27-walking-multiples.html"><span>27</span>Walking the multiples</a></li>
+<li><a href="28-orders-subgroups.html"><span>28</span>Orders and subgroups</a></li>
+<li><a href="29-discrete-logs.html"><span>29</span>Discrete logs on toy curves</a></li>
+</ol>
+<h4>Level 3 · Bitcoiner</h4><ol>
+<li><a href="31-secp256k1.html"><span>31</span>secp256k1 in the panel</a></li>
+<li><a href="32-private-to-public.html"><span>32</span>Private key → public key</a></li>
+<li><a href="33-key-formats.html"><span>33</span>Key formats</a></li>
+<li><a href="34-parity-taproot.html"><span>34</span>Parity, 02/03 and Taproot</a></li>
+<li><a href="35-glv.html"><span>35</span>The GLV endomorphism</a></li>
+<li><a href="36-invalid-points.html"><span>36</span>Invalid points</a></li>
+<li><a href="37-points-in-bitcoin.html"><span>37</span>Where points appear in Bitcoin</a></li>
+<li><a href="39-p256.html"><span>39</span>P-256 next to secp256k1</a></li>
+</ol>
+<h4>Level 4 · Researcher</h4><ol>
+<li><a href="41-mapping.html"><span>41</span>The mapping</a></li>
+<li><a href="42-group-structure.html"><span>42</span>Group structure</a></li>
+<li><a href="43-j-zero.html"><span>43</span>j = 0 and its automorphisms</a></li>
+<li><a href="44-twists.html"><span>44</span>Quadratic twists</a></li>
+<li><a href="45-invalid-curve-attacks.html"><span>45</span>Invalid-curve attacks</a></li>
+<li><a href="46-singular-composite.html"><span>46</span>Singular curves and composite moduli</a></li>
+<li><a href="47-shapes-topology.html"><span>47</span>Shapes as topology</a></li>
+<li><a href="48-scripting.html"><span>48</span>Scripting with ecTorus</a></li>
+<li><a href="49-trusting-numbers.html"><span>49</span>Trusting the numbers</a></li>
+</ol>
+<h4>Reference</h4><ol>
+<li><a href="91-cookbook.html"><span>91</span>Cookbook</a></li>
+<li><a href="92-exercises.html"><span>92</span>Exercises</a></li>
+<li><a href="93-answers.html"><span>93</span>Answers to the exercises</a></li>
+<li><a href="94-glossary.html"><span>94</span>Glossary</a></li>
+<li><a href="95-faq.html"><span>95</span>FAQ and troubleshooting</a></li>
+<li><a href="96-for-teachers.html"><span>96</span>For teachers</a></li>
+</ol>
+</details>
+</nav>
+<main>
+<div class="crumb">Level 1 · Explorer · chapter 18</div>
+<h1 id="18-make-it-look-right">18 Make it look right</h1>
+<p><strong>Level 1 · Explorer.</strong> You will learn every control that changes how the picture looks without changing the
+numbers: the theme, the size sliders, glass and hidden lines, the grid, rings, labels and the legend. Read first:
+<a href="11-start-here.html">11 Start here</a>.</p>
+<p>All the examples here start from the preset “y² = x³ + 7 over F₂₂₃, Programming Bitcoin”, so you can compare them
+with <a href="16-nine-shapes.html#torus">16 One set of points, nine shapes</a>.</p>
+<h3 id="example-181-the-paper-theme">Example 18.1 · The paper theme</h3>
+<div class="example" id="ex-18-paper">
+
+<p><a href="../img/18-paper.webp"><img loading="lazy" decoding="async" alt="the F₂₂₃ chord on the torus in the paper theme: ink lines on a light background" src="../img/18-paper.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJwYjIyMyIsImJhc2VQcmVzZXQiOiJwYjIyMyIsImEiOiIwIiwiYiI6IjciLCJwIjoiMjIzIiwiZyI6Iig0NywgNzEpIiwicDEiOiIoNDcsIDcxKSIsInAyIjoiKDExNiwgNTUpIiwib3AiOiJhZGQiLCJzaG93RyI6dHJ1ZSwiZm9yY2UiOmZhbHNlLCJzaGFwZSI6InRvcnVzIiwibWFwIjoic2NhbGUiLCJiaXRzIjoyNCwic3UiOjI0LCJzdiI6MTYsIlIiOjEuMiwiciI6MC40NiwiZ2xhc3MiOjAuNTUsImJhY2siOjAuNCwic2hvdyI6eyJncmlkIjp0cnVlLCJyaW5ncyI6dHJ1ZSwibGFiZWxzIjp0cnVlLCJjbG91ZCI6dHJ1ZSwiY2hvcmQiOnRydWUsImJldGEiOmZhbHNlLCJtYXAiOnRydWUsInNwaW4iOmZhbHNlfSwicmluZ3MiOnsicDEiOnRydWUsInAyIjp0cnVlLCJzdW0iOnRydWUsImciOmZhbHNlfSwidGhlbWUiOiJwYXBlciIsInBhbmVsIjp0cnVlLCJtaW5pQmlnIjpmYWxzZSwibGVnZW5kTWluIjpmYWxzZSwic2VjcyI6eyJjdXJ2ZSI6dHJ1ZSwicG9pbnRzIjp0cnVlLCJzaGFwZSI6dHJ1ZSwidmlldyI6dHJ1ZSwiaW5zcGVjdG9yIjp0cnVlLCJyZWxhdGlvbnMiOnRydWUsInRlc3QiOmZhbHNlfX0" target="_blank" rel="noopener">The paper theme</a></p>
+<p><strong>Do it yourself</strong></p>
+<ol>
+<li>In <strong>Curve</strong>, pick the preset <strong>y² = x³ + 7 over F₂₂₃, Programming Bitcoin</strong>.</li>
+<li>Press <strong>T</strong> for the paper theme.</li>
+</ol>
+</div>
+
+<p><strong>Look at:</strong> dark ink on a light background, with flat shading: the look of a printed plate in a geometry book.</p>
+<p><strong>Why:</strong> the dark theme is made for screens and the paper theme for print, slides and documents. Press <strong>T</strong> (or the
+half-filled circle at the top of the panel) to switch. The theme is part of the state, so a link keeps it, and a PNG
+saved in the paper theme has a light background.</p>
+<h2 id="size">Size</h2>
+<p>The <strong>Shape</strong> section has two size sliders, and their names change with the shape. On the torus they are <strong>Major R</strong>
+(the size of the whole ring, from 0.80 to 2.00) and <strong>Minor r</strong> (the thickness of the tube, from 0.15 to 0.75).</p>
+<h3 id="example-182-a-slim-tube">Example 18.2 · A slim tube</h3>
+<div class="example" id="ex-18-slim-tube">
+
+<p><a href="../img/18-slim-tube.webp"><img loading="lazy" decoding="async" alt="a wide torus with a thin tube" src="../img/18-slim-tube.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJwYjIyMyIsImJhc2VQcmVzZXQiOiJwYjIyMyIsImEiOiIwIiwiYiI6IjciLCJwIjoiMjIzIiwiZyI6Iig0NywgNzEpIiwicDEiOiIoNDcsIDcxKSIsInAyIjoiKDExNiwgNTUpIiwib3AiOiJhZGQiLCJzaG93RyI6dHJ1ZSwiZm9yY2UiOmZhbHNlLCJzaGFwZSI6InRvcnVzIiwibWFwIjoic2NhbGUiLCJiaXRzIjoyNCwic3UiOjI0LCJzdiI6MTYsIlIiOjIsInIiOjAuMTUsImdsYXNzIjowLjU1LCJiYWNrIjowLjQsInNob3ciOnsiZ3JpZCI6dHJ1ZSwicmluZ3MiOnRydWUsImxhYmVscyI6dHJ1ZSwiY2xvdWQiOnRydWUsImNob3JkIjp0cnVlLCJiZXRhIjpmYWxzZSwibWFwIjp0cnVlLCJzcGluIjpmYWxzZX0sInJpbmdzIjp7InAxIjp0cnVlLCJwMiI6dHJ1ZSwic3VtIjp0cnVlLCJnIjpmYWxzZX0sInRoZW1lIjoiZGFyayIsInBhbmVsIjp0cnVlLCJtaW5pQmlnIjpmYWxzZSwibGVnZW5kTWluIjpmYWxzZSwic2VjcyI6eyJjdXJ2ZSI6dHJ1ZSwicG9pbnRzIjp0cnVlLCJzaGFwZSI6dHJ1ZSwidmlldyI6dHJ1ZSwiaW5zcGVjdG9yIjp0cnVlLCJyZWxhdGlvbnMiOnRydWUsInRlc3QiOmZhbHNlfX0" target="_blank" rel="noopener">A slim tube: Major R 2.00, Minor r 0.15</a> · In <strong>Curve</strong>, pick the preset <strong>y² = x³ + 7 over F₂₂₃, Programming Bitcoin</strong>. In <strong>Shape</strong>, set <strong>Major R</strong> to 2.00 and <strong>Minor r</strong> to 0.15.</p>
+</div>
+
+<h3 id="example-183-a-fat-tube">Example 18.3 · A fat tube</h3>
+<div class="example" id="ex-18-fat-tube">
+
+<p><a href="../img/18-fat-tube.webp"><img loading="lazy" decoding="async" alt="a small torus with a thick tube and a tiny hole" src="../img/18-fat-tube.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJwYjIyMyIsImJhc2VQcmVzZXQiOiJwYjIyMyIsImEiOiIwIiwiYiI6IjciLCJwIjoiMjIzIiwiZyI6Iig0NywgNzEpIiwicDEiOiIoNDcsIDcxKSIsInAyIjoiKDExNiwgNTUpIiwib3AiOiJhZGQiLCJzaG93RyI6dHJ1ZSwiZm9yY2UiOmZhbHNlLCJzaGFwZSI6InRvcnVzIiwibWFwIjoic2NhbGUiLCJiaXRzIjoyNCwic3UiOjI0LCJzdiI6MTYsIlIiOjAuOCwiciI6MC43NSwiZ2xhc3MiOjAuNTUsImJhY2siOjAuNCwic2hvdyI6eyJncmlkIjp0cnVlLCJyaW5ncyI6dHJ1ZSwibGFiZWxzIjp0cnVlLCJjbG91ZCI6dHJ1ZSwiY2hvcmQiOnRydWUsImJldGEiOmZhbHNlLCJtYXAiOnRydWUsInNwaW4iOmZhbHNlfSwicmluZ3MiOnsicDEiOnRydWUsInAyIjp0cnVlLCJzdW0iOnRydWUsImciOmZhbHNlfSwidGhlbWUiOiJkYXJrIiwicGFuZWwiOnRydWUsIm1pbmlCaWciOmZhbHNlLCJsZWdlbmRNaW4iOmZhbHNlLCJzZWNzIjp7ImN1cnZlIjp0cnVlLCJwb2ludHMiOnRydWUsInNoYXBlIjp0cnVlLCJ2aWV3Ijp0cnVlLCJpbnNwZWN0b3IiOnRydWUsInJlbGF0aW9ucyI6dHJ1ZSwidGVzdCI6ZmFsc2V9fQ" target="_blank" rel="noopener">A fat tube: Major R 0.80, Minor r 0.75</a> · In <strong>Curve</strong>, pick the preset <strong>y² = x³ + 7 over F₂₂₃, Programming Bitcoin</strong>. In <strong>Shape</strong>, set <strong>Major R</strong> to 0.80 and <strong>Minor r</strong> to 0.75.</p>
+</div>
+
+<p><strong>Why:</strong> the numbers do not change, only the proportions. A slim tube makes the angle around the hole easy to read; a
+fat tube spreads the points around the tube, so the y direction is easier to see.</p>
+<h2 id="glass-and-hidden-lines">Glass and hidden lines</h2>
+<p>Two sliders in <strong>Display</strong> control how solid the surface looks. <strong>Glass</strong> (0.55 at the start) is the shine of the
+surface, strongest where you look along it. <strong>Hidden lines</strong> (0.40 at the start) is how strongly the lines and points
+behind the surface show through, faint and dashed, like the hidden edges in a technical drawing.</p>
+<h3 id="example-184-glass-100-hidden-lines-000">Example 18.4 · Glass 1.00, hidden lines 0.00</h3>
+<div class="example" id="ex-18-glass-full">
+
+<p><a href="../img/18-glass-full.webp"><img loading="lazy" decoding="async" alt="the torus as solid-looking glass, with nothing drawn behind it" src="../img/18-glass-full.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJwYjIyMyIsImJhc2VQcmVzZXQiOiJwYjIyMyIsImEiOiIwIiwiYiI6IjciLCJwIjoiMjIzIiwiZyI6Iig0NywgNzEpIiwicDEiOiIoNDcsIDcxKSIsInAyIjoiKDExNiwgNTUpIiwib3AiOiJhZGQiLCJzaG93RyI6dHJ1ZSwiZm9yY2UiOmZhbHNlLCJzaGFwZSI6InRvcnVzIiwibWFwIjoic2NhbGUiLCJiaXRzIjoyNCwic3UiOjI0LCJzdiI6MTYsIlIiOjEuMiwiciI6MC40NiwiZ2xhc3MiOjEsImJhY2siOjAsInNob3ciOnsiZ3JpZCI6dHJ1ZSwicmluZ3MiOnRydWUsImxhYmVscyI6dHJ1ZSwiY2xvdWQiOnRydWUsImNob3JkIjp0cnVlLCJiZXRhIjpmYWxzZSwibWFwIjp0cnVlLCJzcGluIjpmYWxzZX0sInJpbmdzIjp7InAxIjp0cnVlLCJwMiI6dHJ1ZSwic3VtIjp0cnVlLCJnIjpmYWxzZX0sInRoZW1lIjoiZGFyayIsInBhbmVsIjp0cnVlLCJtaW5pQmlnIjpmYWxzZSwibGVnZW5kTWluIjpmYWxzZSwic2VjcyI6eyJjdXJ2ZSI6dHJ1ZSwicG9pbnRzIjp0cnVlLCJzaGFwZSI6dHJ1ZSwidmlldyI6dHJ1ZSwiaW5zcGVjdG9yIjp0cnVlLCJyZWxhdGlvbnMiOnRydWUsInRlc3QiOmZhbHNlfX0" target="_blank" rel="noopener">Glass 1.00, hidden lines 0.00</a> · In <strong>Curve</strong>, pick the preset <strong>y² = x³ + 7 over F₂₂₃, Programming Bitcoin</strong>. Set the <strong>Glass</strong> slider to 1.00. Set the <strong>Hidden lines</strong> slider to 0.00.</p>
+</div>
+
+<h3 id="example-185-glass-000-hidden-lines-100">Example 18.5 · Glass 0.00, hidden lines 1.00</h3>
+<div class="example" id="ex-18-glass-none">
+
+<p><a href="../img/18-glass-none.webp"><img loading="lazy" decoding="async" alt="the torus as a wire frame: no glass, and every line behind it drawn" src="../img/18-glass-none.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJwYjIyMyIsImJhc2VQcmVzZXQiOiJwYjIyMyIsImEiOiIwIiwiYiI6IjciLCJwIjoiMjIzIiwiZyI6Iig0NywgNzEpIiwicDEiOiIoNDcsIDcxKSIsInAyIjoiKDExNiwgNTUpIiwib3AiOiJhZGQiLCJzaG93RyI6dHJ1ZSwiZm9yY2UiOmZhbHNlLCJzaGFwZSI6InRvcnVzIiwibWFwIjoic2NhbGUiLCJiaXRzIjoyNCwic3UiOjI0LCJzdiI6MTYsIlIiOjEuMiwiciI6MC40NiwiZ2xhc3MiOjAsImJhY2siOjEsInNob3ciOnsiZ3JpZCI6dHJ1ZSwicmluZ3MiOnRydWUsImxhYmVscyI6dHJ1ZSwiY2xvdWQiOnRydWUsImNob3JkIjp0cnVlLCJiZXRhIjpmYWxzZSwibWFwIjp0cnVlLCJzcGluIjpmYWxzZX0sInJpbmdzIjp7InAxIjp0cnVlLCJwMiI6dHJ1ZSwic3VtIjp0cnVlLCJnIjpmYWxzZX0sInRoZW1lIjoiZGFyayIsInBhbmVsIjp0cnVlLCJtaW5pQmlnIjpmYWxzZSwibGVnZW5kTWluIjpmYWxzZSwic2VjcyI6eyJjdXJ2ZSI6dHJ1ZSwicG9pbnRzIjp0cnVlLCJzaGFwZSI6dHJ1ZSwidmlldyI6dHJ1ZSwiaW5zcGVjdG9yIjp0cnVlLCJyZWxhdGlvbnMiOnRydWUsInRlc3QiOmZhbHNlfX0" target="_blank" rel="noopener">Glass 0.00, hidden lines 1.00</a> · In <strong>Curve</strong>, pick the preset <strong>y² = x³ + 7 over F₂₂₃, Programming Bitcoin</strong>. Set the <strong>Glass</strong> slider to 0.00. Set the <strong>Hidden lines</strong> slider to 1.00.</p>
+</div>
+
+<p><strong>Why:</strong> with no hidden lines you see only the front, as with a solid object. With no glass and full hidden lines you
+see everything at once, which helps when a point is on the far side; the dashes still tell you which lines are behind.</p>
+<h2 id="the-grid-rings-and-labels">The grid, rings and labels</h2>
+<p>The grid divides the surface into sectors: 24 × 16 at the start (24 around the hole, 24 along x, and 16 around the
+tube). <strong>Grid sectors along x</strong> and <strong>Grid sectors along y</strong> in <strong>Display</strong> change that. Each point’s card names the
+sector it is in, which is a quick way to describe where a point is.</p>
+<h3 id="example-186-a-finer-grid-48-32-sectors">Example 18.6 · A finer grid: 48 × 32 sectors</h3>
+<div class="example" id="ex-18-sectors">
+
+<p><a href="../img/18-sectors.webp"><img loading="lazy" decoding="async" alt="the torus with a grid of 48 sectors around the hole and 32 around the tube" src="../img/18-sectors.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJwYjIyMyIsImJhc2VQcmVzZXQiOiJwYjIyMyIsImEiOiIwIiwiYiI6IjciLCJwIjoiMjIzIiwiZyI6Iig0NywgNzEpIiwicDEiOiIoNDcsIDcxKSIsInAyIjoiKDExNiwgNTUpIiwib3AiOiJhZGQiLCJzaG93RyI6dHJ1ZSwiZm9yY2UiOmZhbHNlLCJzaGFwZSI6InRvcnVzIiwibWFwIjoic2NhbGUiLCJiaXRzIjoyNCwic3UiOjQ4LCJzdiI6MzIsIlIiOjEuMiwiciI6MC40NiwiZ2xhc3MiOjAuNTUsImJhY2siOjAuNCwic2hvdyI6eyJncmlkIjp0cnVlLCJyaW5ncyI6dHJ1ZSwibGFiZWxzIjp0cnVlLCJjbG91ZCI6dHJ1ZSwiY2hvcmQiOnRydWUsImJldGEiOmZhbHNlLCJtYXAiOnRydWUsInNwaW4iOmZhbHNlfSwicmluZ3MiOnsicDEiOnRydWUsInAyIjp0cnVlLCJzdW0iOnRydWUsImciOmZhbHNlfSwidGhlbWUiOiJkYXJrIiwicGFuZWwiOnRydWUsIm1pbmlCaWciOmZhbHNlLCJsZWdlbmRNaW4iOmZhbHNlLCJzZWNzIjp7ImN1cnZlIjp0cnVlLCJwb2ludHMiOnRydWUsInNoYXBlIjp0cnVlLCJ2aWV3Ijp0cnVlLCJpbnNwZWN0b3IiOnRydWUsInJlbGF0aW9ucyI6dHJ1ZSwidGVzdCI6ZmFsc2V9fQ" target="_blank" rel="noopener">A finer grid: 48 × 32 sectors</a> · In <strong>Curve</strong>, pick the preset <strong>y² = x³ + 7 over F₂₂₃, Programming Bitcoin</strong>. Set <strong>Grid sectors along x</strong> to 48 and <strong>Grid sectors along y</strong> to 32.</p>
+</div>
+
+<h3 id="example-187-only-the-points-grid-rings-and-labels-off">Example 18.7 · Only the points: grid, rings and labels off</h3>
+<div class="example" id="ex-18-minimal">
+
+<p><a href="../img/18-minimal.webp"><img loading="lazy" decoding="async" alt="the torus with only the dots, the coloured points and the chord" src="../img/18-minimal.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJwYjIyMyIsImJhc2VQcmVzZXQiOiJwYjIyMyIsImEiOiIwIiwiYiI6IjciLCJwIjoiMjIzIiwiZyI6Iig0NywgNzEpIiwicDEiOiIoNDcsIDcxKSIsInAyIjoiKDExNiwgNTUpIiwib3AiOiJhZGQiLCJzaG93RyI6dHJ1ZSwiZm9yY2UiOmZhbHNlLCJzaGFwZSI6InRvcnVzIiwibWFwIjoic2NhbGUiLCJiaXRzIjoyNCwic3UiOjI0LCJzdiI6MTYsIlIiOjEuMiwiciI6MC40NiwiZ2xhc3MiOjAuNTUsImJhY2siOjAuNCwic2hvdyI6eyJncmlkIjpmYWxzZSwicmluZ3MiOmZhbHNlLCJsYWJlbHMiOmZhbHNlLCJjbG91ZCI6dHJ1ZSwiY2hvcmQiOnRydWUsImJldGEiOmZhbHNlLCJtYXAiOnRydWUsInNwaW4iOmZhbHNlfSwicmluZ3MiOnsicDEiOnRydWUsInAyIjp0cnVlLCJzdW0iOnRydWUsImciOmZhbHNlfSwidGhlbWUiOiJkYXJrIiwicGFuZWwiOnRydWUsIm1pbmlCaWciOmZhbHNlLCJsZWdlbmRNaW4iOmZhbHNlLCJzZWNzIjp7ImN1cnZlIjp0cnVlLCJwb2ludHMiOnRydWUsInNoYXBlIjp0cnVlLCJ2aWV3Ijp0cnVlLCJpbnNwZWN0b3IiOnRydWUsInJlbGF0aW9ucyI6dHJ1ZSwidGVzdCI6ZmFsc2V9fQ" target="_blank" rel="noopener">Only the points: grid, rings and labels off</a> · In <strong>Curve</strong>, pick the preset <strong>y² = x³ + 7 over F₂₂₃, Programming Bitcoin</strong>. In <strong>Display</strong>, turn off <strong>Sector grid</strong> (<strong>G</strong>), <strong>Guide rings</strong> and <strong>Labels</strong> (<strong>L</strong>).</p>
+</div>
+
+<p><strong>Why:</strong> the switches in <strong>Display</strong> turn each layer on and off: <strong>Sector grid</strong> (key <strong>G</strong>), <strong>Guide rings</strong>,
+<strong>Labels</strong> (key <strong>L</strong>), <strong>All curve points</strong> (key <strong>C</strong>), <strong>Chord construction</strong> (key <strong>K</strong>) and <strong>Flat map</strong> (key
+<strong>M</strong>). Below them, <strong>Guide rings for</strong> picks whose rings are drawn: P₁, P₂, the result, G.</p>
+<h3 id="example-188-the-compact-legend">Example 18.8 · The compact legend</h3>
+<div class="example" id="ex-18-compact-legend">
+
+<p><a href="../img/18-compact-legend.webp"><img loading="lazy" decoding="async" alt="the legend folded down to its coloured names" src="../img/18-compact-legend.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJwYjIyMyIsImJhc2VQcmVzZXQiOiJwYjIyMyIsImEiOiIwIiwiYiI6IjciLCJwIjoiMjIzIiwiZyI6Iig0NywgNzEpIiwicDEiOiIoNDcsIDcxKSIsInAyIjoiKDExNiwgNTUpIiwib3AiOiJhZGQiLCJzaG93RyI6dHJ1ZSwiZm9yY2UiOmZhbHNlLCJzaGFwZSI6InRvcnVzIiwibWFwIjoic2NhbGUiLCJiaXRzIjoyNCwic3UiOjI0LCJzdiI6MTYsIlIiOjEuMiwiciI6MC40NiwiZ2xhc3MiOjAuNTUsImJhY2siOjAuNCwic2hvdyI6eyJncmlkIjp0cnVlLCJyaW5ncyI6dHJ1ZSwibGFiZWxzIjp0cnVlLCJjbG91ZCI6dHJ1ZSwiY2hvcmQiOnRydWUsImJldGEiOmZhbHNlLCJtYXAiOnRydWUsInNwaW4iOmZhbHNlfSwicmluZ3MiOnsicDEiOnRydWUsInAyIjp0cnVlLCJzdW0iOnRydWUsImciOmZhbHNlfSwidGhlbWUiOiJkYXJrIiwicGFuZWwiOnRydWUsIm1pbmlCaWciOmZhbHNlLCJsZWdlbmRNaW4iOnRydWUsInNlY3MiOnsiY3VydmUiOnRydWUsInBvaW50cyI6dHJ1ZSwic2hhcGUiOnRydWUsInZpZXciOnRydWUsImluc3BlY3RvciI6dHJ1ZSwicmVsYXRpb25zIjp0cnVlLCJ0ZXN0IjpmYWxzZX19" target="_blank" rel="noopener">The compact legend</a> · In <strong>Curve</strong>, pick the preset <strong>y² = x³ + 7 over F₂₂₃, Programming Bitcoin</strong>. Click the small arrow at the top right of the legend to make it compact.</p>
+</div>
+
+<p><strong>Why:</strong> the small arrow at the corner of the legend folds it down to one line per point; click it again for the full
+legend. Cards keep out of the legend’s way either way.</p>
+<h2 id="try-it-yourself">Try it yourself</h2>
+<ul>
+<li>Make a picture for a slide: the paper theme, a slim tube, no labels, the compact legend, the panel hidden
+  (<kbd>\</kbd>), and <strong>Save the view as PNG</strong>.</li>
+<li>Set <strong>Grid sectors along x</strong> to 4 and <strong>Grid sectors along y</strong> to 4: each sector is now a quarter turn each way.</li>
+<li>Turn <strong>Hidden lines</strong> to 0 and orbit until a point goes behind the surface: its marker disappears.</li>
+</ul>
+<h2 id="recap">Recap</h2>
+<ul>
+<li><strong>T</strong> switches between the dark and the paper theme; the two size sliders set the proportions of each shape.</li>
+<li><strong>Glass</strong> and <strong>Hidden lines</strong> set how solid the surface looks; the grid’s sectors, rings, labels and the legend
+  can all be changed or hidden.</li>
+<li>None of this changes a number: only the picture.</li>
+</ul>
+<p>Next, Level 2 begins: <a href="21-clock-arithmetic.html">21 Clock arithmetic and the curve equation</a>. Or jump to the Bitcoin
+chapters at <a href="31-secp256k1.html">31 secp256k1 in the panel</a>.</p>
+<nav class="pn" aria-label="Previous and next"><a class="prev" href="17-save-share-export.html"><small>← previous</small>17 · Save, share, export</a><a class="next" href="21-clock-arithmetic.html"><small>next →</small>21 · Clock arithmetic and the curve equation</a></nav>
+<footer class="foot"><p>Tutorials for <i>Elliptic curve → torus</i> v3.2.2, the single-file visualizer by Idle (idlebg.com). Every example link opens the visualizer at the top of the repository.</p>
+<nav class="links" aria-label="Project links"><a class="pill" href="https://github.com/idlebg/EllipticTorus3d" target="_blank" rel="noopener" title="Source code, tests and releases (MIT)"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><path d="m5.5 4.5-3.5 3.5 3.5 3.5M10.5 4.5 14 8l-3.5 3.5M9.2 2.8 6.8 13.2"/></svg>Source on GitHub</a><a class="pill" href="https://idlebg.com/idleGevrek/" target="_blank" rel="noopener" title="Ready-made states with screenshots and a tour video"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1.2"/><rect x="9" y="2" width="5" height="5" rx="1.2"/><rect x="2" y="9" width="5" height="5" rx="1.2"/><rect x="9" y="9" width="5" height="5" rx="1.2"/></svg>Gallery and tour</a><a class="pill" href="https://idlebg.com/idleGevrek/tutorials/" target="_blank" rel="noopener" title="These tutorials on idlebg.com"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><path d="M8 4.5C6.6 3.4 4.6 3 2.5 3.2v9c2.1-.2 4.1.2 5.5 1.3 1.4-1.1 3.4-1.5 5.5-1.3v-9C11.4 3 9.4 3.4 8 4.5zM8 4.5v9"/></svg>Tutorials online</a></nav></footer>
+</main>
+</div>
+</body>
+</html>

@@ -148,6 +148,22 @@ for (const [C, k1x, name] of [[C1, ref.secp256k1, 'secp256k1'], [C2, ref.p256, '
 ok(eqP(E.parsePoint(ref.p256['2G'][0].slice(2).padStart(64, '0'), { curve: C2 }).P, ref.p256.x2G_even), 'P-256 x-only lifts to the even-y point');
 { const Q = C2.mul(3n, r1.G), h = E.parsePoint(E.encodeSEC(Q, C2, 'hybrid'), { curve: C2 }); ok(h.kind === 'hybrid' && C2.eq(h.P, Q) && !h.warnings.length, 'P-256 hybrid round trip'); }
 
+// encodeSECExact: what Step, Use as P₁ / P₂ and −P₁ write must read back as the same point
+{
+  const back = (C, enc) => E.parsePoint(enc, { curve: C }).P;
+  const Q = C1.mul(7n, G), q = E.encodeSECExact(Q, C1, true);
+  ok(q === E.encodeSEC(Q, C1) && C1.eq(back(C1, q), Q), 'exact SEC: compressed for a curve point');
+  // forced (1, 1) + G is off the curve; compressed, its x lifts to another point (the v3.2.1 Step bug), 04 keeps it
+  const F = C1.add({ x: 1n, y: 1n }, G), f = E.encodeSECExact(F, C1, true);
+  let lifted = null; try { lifted = back(C1, E.encodeSEC(F, C1)); } catch { /* x on the twist */ }
+  ok(!C1.isOn(F) && f.startsWith('04') && C1.eq(back(C1, f), F) && !C1.eq(lifted, F), 'exact SEC: 04 for an off-curve point');
+  const t = ref.toys.find((x) => x.name === 'pb223'), Ct = new E.Curve(BigInt(t.a), BigInt(t.b), BigInt(t.p));
+  const T = { x: BigInt(t.two_torsion[0][0]), y: 0n }, tt = E.encodeSECExact(T, Ct, true);
+  ok(Ct.isOn(T) && tt === E.encodeSEC(T, Ct) && Ct.eq(back(Ct, tt), T), 'exact SEC: compressed for y = 0 (a single root)');
+  const pc = 100001n, Cc = new E.Curve(0n, 1n, pc), O1 = { x: 0n, y: 1n }, oc = E.encodeSECExact(O1, Cc, E.isProbablePrime(pc)); // 11 · 9091
+  ok(Cc.isOn(O1) && oc.startsWith('04') && Cc.eq(back(Cc, oc), O1), 'exact SEC: 04 on a composite p (compressed input is refused there)');
+}
+
 // inputs that must fail fast instead of freezing the tab
 const fast = (name, fn, re, ms = 300) => {
   const t0 = performance.now(); let err = null;

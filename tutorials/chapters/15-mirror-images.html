@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>15 Mirror images: 02 and 03 · Elliptic curve → torus · tutorials</title>
+<meta name="description" content="15 Mirror images: 02 and 03: every point and its mirror image, on every shape. Tutorials for Elliptic curve → torus, the single-file offline visualizer of elliptic curves over finite fields: how to use it and what it shows, with checked worked examples from first steps to Bitcoin keys and research.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23070b10'/%3E%3Cellipse cx='32' cy='33' rx='23' ry='14' fill='none' stroke='%232de2e6' stroke-width='5'/%3E%3Cpath d='M21 31c6 5 16 5 22 0M24 34c5-3 11-3 16 0' fill='none' stroke='%232de2e6' stroke-width='3.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root { color-scheme: light dark; --bg: #f6f4ee; --panel: #fffdf8; --panel-2: #efece3; --line: #ddd8cb; --text: #1d2530;
+  --muted: #5d6874; --accent: #08797d; --accent-2: #b35c00; --code: #ece8dd; --shadow: 0 1px 2px rgba(0,0,0,.06);
+  --font: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --mono: "Cascadia Mono", "Cascadia Code", Consolas, "SF Mono", Menlo, monospace; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #070b10; --panel: #0b1118; --panel-2: #0f1822; --line: #1c2a37; --text: #d5e1ea; --muted: #8b9cad;
+    --accent: #2de2e6; --accent-2: #ffb547; --code: #111c27; --shadow: none; } }
+* { box-sizing: border-box; }
+html { scroll-padding-top: 12px; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.62 var(--font); }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:hover { text-decoration-thickness: 2px; }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); min-height: 100vh; }
+.side { position: sticky; top: 0; height: 100vh; overflow: auto; padding: 20px 18px 40px; border-right: 1px solid var(--line);
+  background: var(--panel); font-size: 14px; line-height: 1.45; }
+.side .brand { display: block; font-weight: 650; font-size: 15px; color: var(--text); text-decoration: none; margin-bottom: 2px; }
+.side .brand b { color: var(--accent); font-weight: 500; }
+.side .sub { color: var(--muted); font-size: 12.5px; margin: 0 0 12px; }
+.side .links { margin: 0 0 6px; }
+.side h4 { margin: 18px 0 6px; font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.side ol { list-style: none; margin: 0; padding: 0; }
+.side li a { display: flex; gap: 8px; padding: 3px 8px; border-radius: 6px; color: var(--text); text-decoration: none; }
+.side li a span { color: var(--muted); min-width: 1.6em; font-variant-numeric: tabular-nums; }
+.side li a:hover { background: var(--panel-2); }
+.side li a[aria-current] { background: var(--panel-2); color: var(--accent); font-weight: 600; box-shadow: inset 2px 0 0 var(--accent); }
+.side li a:focus-visible { outline-offset: -2px; }
+.side .top a { font-weight: 600; }
+.side details summary { display: none; }
+svg.ic { fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.links { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px 4px 9px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--panel-2); background: color-mix(in srgb, var(--accent) 7%, var(--panel)); color: var(--text);
+  font-size: 12.5px; font-weight: 600; line-height: 1.35; text-decoration: none; white-space: nowrap;
+  transition: color .15s, border-color .15s, background-color .15s; }
+.pill .ic { width: 14px; height: 14px; flex: none; color: var(--accent); }
+.pill:hover { color: var(--accent); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--panel)); }
+.pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 999px; }
+main { padding: 28px clamp(18px, 4vw, 56px) 64px; max-width: 1020px; }
+main > .crumb { color: var(--muted); font-size: 13px; margin-bottom: 6px; }
+h1 { font-size: 30px; line-height: 1.2; margin: 4px 0 14px; letter-spacing: -.01em; }
+h2 { font-size: 22px; margin: 40px 0 10px; padding-top: 14px; border-top: 1px solid var(--line); }
+h3 { font-size: 18px; margin: 30px 0 8px; }
+h4 { font-size: 16px; margin: 22px 0 6px; }
+p, ul, ol, table, pre, blockquote { margin: 10px 0 14px; }
+li { margin: 3px 0; }
+code { font: 0.88em/1.4 var(--mono); background: var(--code); border-radius: 4px; padding: 1px 4px; overflow-wrap: anywhere; }
+pre { background: var(--code); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow: auto; }
+pre code { background: none; padding: 0; overflow-wrap: normal; }
+kbd { font: 12.5px var(--mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; display: block; overflow-x: auto; }
+th, td { border: 1px solid var(--line); padding: 6px 9px; text-align: left; vertical-align: top; }
+th { background: var(--panel-2); font-weight: 600; }
+td code { overflow-wrap: anywhere; }
+blockquote { border-left: 3px solid var(--accent); margin-left: 0; padding: 2px 14px; color: var(--muted); background: var(--panel); border-radius: 0 6px 6px 0; }
+img { max-width: 100%; height: auto; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 28px 0; }
+.example { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 12px 16px 6px; margin: 14px 0 18px; box-shadow: var(--shadow); }
+.example > p:first-child { margin-top: 2px; }
+.example img { display: block; border-radius: 8px; border: 1px solid var(--line); }
+.example .open a { display: inline-block; background: var(--accent); color: var(--bg); font-weight: 650; text-decoration: none; border-radius: 7px; padding: 5px 12px; }
+.example .open a:hover { filter: brightness(1.1); }
+.example .open a:focus-visible { outline-offset: 3px; }
+.example ol { font-size: 15px; }
+.example table { font-size: 14px; }
+.pn { display: flex; justify-content: space-between; gap: 14px; margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); }
+.pn a { display: block; max-width: 48%; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; text-decoration: none; background: var(--panel); }
+.pn a small { display: block; color: var(--muted); font-size: 12px; }
+.pn a.next { margin-left: auto; text-align: right; }
+.pn a:focus-visible { border-radius: 10px; }
+footer.foot { color: var(--muted); font-size: 12.5px; margin-top: 30px; padding-top: 14px; border-top: 1px solid var(--line); }
+footer.foot p { margin: 0 0 10px; }
+.toc-inline { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 16px; font-size: 14.5px; }
+/* all-examples page: filters by level without script (radio buttons + sibling selectors) */
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 18px; }
+.filters input { position: absolute; opacity: 0; pointer-events: none; }
+.filters label { border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; cursor: pointer; font-size: 14px; background: var(--panel); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.card { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); overflow: hidden; display: flex; flex-direction: column; }
+.card img { display: block; width: 100%; aspect-ratio: 1068 / 900; object-fit: cover; border-bottom: 1px solid var(--line); }
+.card .b { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.card h3 { margin: 0; font-size: 15px; }
+.card .meta { color: var(--muted); font-size: 12.5px; }
+.card .acts { margin-top: auto; display: flex; gap: 12px; font-size: 14px; }
+#f-all:checked ~ .filters label[for="f-all"], #f-1:checked ~ .filters label[for="f-1"], #f-2:checked ~ .filters label[for="f-2"],
+#f-3:checked ~ .filters label[for="f-3"], #f-4:checked ~ .filters label[for="f-4"], #f-9:checked ~ .filters label[for="f-9"] {
+  background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
+#f-all:focus-visible ~ .filters label[for="f-all"], #f-1:focus-visible ~ .filters label[for="f-1"], #f-2:focus-visible ~ .filters label[for="f-2"],
+#f-3:focus-visible ~ .filters label[for="f-3"], #f-4:focus-visible ~ .filters label[for="f-4"], #f-9:focus-visible ~ .filters label[for="f-9"] {
+  outline: 2px solid var(--accent); outline-offset: 2px; }
+#f-1:checked ~ .grid .card:not(.l1), #f-2:checked ~ .grid .card:not(.l2), #f-3:checked ~ .grid .card:not(.l3),
+#f-4:checked ~ .grid .card:not(.l4), #f-9:checked ~ .grid .card:not(.l9) { display: none; }
+.radios { position: absolute; opacity: 0; pointer-events: none; }
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .side { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+  .side details summary { display: block; cursor: pointer; color: var(--accent); font-weight: 600; margin: 6px 0; }
+  .side details:not([open]) > ol, .side details:not([open]) > h4 { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .pill { transition: none; } }
+@media print { .side, .pn, .foot .links { display: none; } .layout { display: block; } main { max-width: none; } }
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="side" aria-label="Contents">
+<a class="brand" href="../index.html">Elliptic curve <b>→</b> torus</a>
+<p class="sub">Tutorials for the visualizer v3.2.2. Offline; nothing is loaded from the network.</p>
+<div class="links"><a class="pill" href="https://github.com/idlebg/EllipticTorus3d" target="_blank" rel="noopener" title="Source code, tests and releases (MIT)"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><path d="m5.5 4.5-3.5 3.5 3.5 3.5M10.5 4.5 14 8l-3.5 3.5M9.2 2.8 6.8 13.2"/></svg>Source on GitHub</a><a class="pill" href="https://idlebg.com/idleGevrek/" target="_blank" rel="noopener" title="Ready-made states with screenshots and a tour video"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1.2"/><rect x="9" y="2" width="5" height="5" rx="1.2"/><rect x="2" y="9" width="5" height="5" rx="1.2"/><rect x="9" y="9" width="5" height="5" rx="1.2"/></svg>Gallery and tour</a><a class="pill" href="https://idlebg.com/idleGevrek/tutorials/" target="_blank" rel="noopener" title="These tutorials on idlebg.com"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><path d="M8 4.5C6.6 3.4 4.6 3 2.5 3.2v9c2.1-.2 4.1.2 5.5 1.3 1.4-1.1 3.4-1.5 5.5-1.3v-9C11.4 3 9.4 3.4 8 4.5zM8 4.5v9"/></svg>Tutorials online</a></div>
+<details open><summary>Contents</summary>
+<ol class="top"><li><a href="../index.html"><span>·</span>Start page</a></li><li><a href="../examples.html"><span>·</span>All examples</a></li></ol>
+<h4>Level 1 · Explorer</h4><ol>
+<li><a href="11-start-here.html"><span>11</span>Start here</a></li>
+<li><a href="12-cloud-of-dots.html"><span>12</span>A curve is a cloud of dots</a></li>
+<li><a href="13-why-a-donut.html"><span>13</span>Why a donut</a></li>
+<li><a href="14-how-far-apart.html"><span>14</span>Two points: how far apart?</a></li>
+<li><a href="15-mirror-images.html" aria-current="page"><span>15</span>Mirror images: 02 and 03</a></li>
+<li><a href="16-nine-shapes.html"><span>16</span>One set of points, nine shapes</a></li>
+<li><a href="17-save-share-export.html"><span>17</span>Save, share, export</a></li>
+<li><a href="18-make-it-look-right.html"><span>18</span>Make it look right</a></li>
+</ol>
+<h4>Level 2 · Learner</h4><ol>
+<li><a href="21-clock-arithmetic.html"><span>21</span>Clock arithmetic and the curve equation</a></li>
+<li><a href="22-counting-points.html"><span>22</span>Counting points</a></li>
+<li><a href="23-negation.html"><span>23</span>Negation</a></li>
+<li><a href="24-chord.html"><span>24</span>Adding points: the chord</a></li>
+<li><a href="25-tangent.html"><span>25</span>Doubling: the tangent</a></li>
+<li><a href="26-subtraction.html"><span>26</span>Subtraction</a></li>
+<li><a href="27-walking-multiples.html"><span>27</span>Walking the multiples</a></li>
+<li><a href="28-orders-subgroups.html"><span>28</span>Orders and subgroups</a></li>
+<li><a href="29-discrete-logs.html"><span>29</span>Discrete logs on toy curves</a></li>
+</ol>
+<h4>Level 3 · Bitcoiner</h4><ol>
+<li><a href="31-secp256k1.html"><span>31</span>secp256k1 in the panel</a></li>
+<li><a href="32-private-to-public.html"><span>32</span>Private key → public key</a></li>
+<li><a href="33-key-formats.html"><span>33</span>Key formats</a></li>
+<li><a href="34-parity-taproot.html"><span>34</span>Parity, 02/03 and Taproot</a></li>
+<li><a href="35-glv.html"><span>35</span>The GLV endomorphism</a></li>
+<li><a href="36-invalid-points.html"><span>36</span>Invalid points</a></li>
+<li><a href="37-points-in-bitcoin.html"><span>37</span>Where points appear in Bitcoin</a></li>
+<li><a href="39-p256.html"><span>39</span>P-256 next to secp256k1</a></li>
+</ol>
+<h4>Level 4 · Researcher</h4><ol>
+<li><a href="41-mapping.html"><span>41</span>The mapping</a></li>
+<li><a href="42-group-structure.html"><span>42</span>Group structure</a></li>
+<li><a href="43-j-zero.html"><span>43</span>j = 0 and its automorphisms</a></li>
+<li><a href="44-twists.html"><span>44</span>Quadratic twists</a></li>
+<li><a href="45-invalid-curve-attacks.html"><span>45</span>Invalid-curve attacks</a></li>
+<li><a href="46-singular-composite.html"><span>46</span>Singular curves and composite moduli</a></li>
+<li><a href="47-shapes-topology.html"><span>47</span>Shapes as topology</a></li>
+<li><a href="48-scripting.html"><span>48</span>Scripting with ecTorus</a></li>
+<li><a href="49-trusting-numbers.html"><span>49</span>Trusting the numbers</a></li>
+</ol>
+<h4>Reference</h4><ol>
+<li><a href="91-cookbook.html"><span>91</span>Cookbook</a></li>
+<li><a href="92-exercises.html"><span>92</span>Exercises</a></li>
+<li><a href="93-answers.html"><span>93</span>Answers to the exercises</a></li>
+<li><a href="94-glossary.html"><span>94</span>Glossary</a></li>
+<li><a href="95-faq.html"><span>95</span>FAQ and troubleshooting</a></li>
+<li><a href="96-for-teachers.html"><span>96</span>For teachers</a></li>
+</ol>
+</details>
+</nav>
+<main>
+<div class="crumb">Level 1 · Explorer · chapter 15</div>
+<h1 id="15-mirror-images-02-and-03">15 Mirror images: 02 and 03</h1>
+<p><strong>Level 1 · Explorer.</strong> You will learn that every point of the curve has a mirror image, how the visualizer shows it
+on the donut, on the flat map and on other shapes, and what the prefixes 02 and 03 of a Bitcoin key have to do with
+it. Read first: <a href="13-why-a-donut.html">13 Why a donut</a> and <a href="14-how-far-apart.html">14 Two points: how far apart?</a>.</p>
+<h2 id="two-points-for-every-x">Two points for every x</h2>
+<p>The rule of the curve gives y² (“y times y”), not y itself. A number squared does not care about its sign: 3 × 3 and
+(−3) × (−3) are both 9. So when one y fits, its negative fits too, and on a clock with p hours “minus y” is p − y.
+Every point (x, y) therefore has a partner</p>
+<p>−P = (x, p − y),</p>
+<p>with the same x and the other y. It is called the <a href="94-glossary.html#negation">negation</a> of P, or its <strong>mirror image</strong>,
+and the next sections show why.</p>
+<p>There is one more fact that makes this matter for Bitcoin. p is odd, so y and p − y always have opposite parity: if
+one is even, the other is odd. A compressed public key stores x and one extra byte: <code>02</code> for “the even y” and <code>03</code> for
+“the odd y”. So <code>02</code> + x and <code>03</code> + x are always a point and its mirror image. The visualizer opens with exactly that
+pair, G and −G on Bitcoin’s curve:</p>
+<ul>
+<li>G = <code>0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798</code></li>
+<li>−G = <code>0379be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798</code></li>
+</ul>
+<p>Only the first byte differs.</p>
+<h3 id="example-151-the-mirror-button-p2-p1">Example 15.1 · The mirror button: P₂ = −P₁</h3>
+<p>On the small curve F₂₂₃, type <code>4G</code> into P₁, then click the button next to P₂ whose tooltip says “Set P₂ = −P₁, the
+mirror image”.</p>
+<div class="example" id="ex-15-neg-button">
+
+<p><a href="../img/15-neg-button.webp"><img loading="lazy" decoding="async" alt="F₂₂₃ from the side: P₁ = 4G on top of the tube and P₂ = −P₁ = 17G straight below it, joined by their shared ring, and the Relations section" src="../img/15-neg-button.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoicGIyMjMiLCJhIjoiMCIsImIiOiI3IiwicCI6IjIyMyIsImciOiIoNDcsIDcxKSIsInAxIjoiNEciLCJwMiI6IigxOTQsIDE3MikiLCJvcCI6ImFkZCIsInNob3dHIjp0cnVlLCJmb3JjZSI6ZmFsc2UsInNoYXBlIjoidG9ydXMiLCJtYXAiOiJzY2FsZSIsImJpdHMiOjI0LCJzdSI6MjQsInN2IjoxNiwiUiI6MS4yLCJyIjowLjQ2LCJnbGFzcyI6MC41NSwiYmFjayI6MC40LCJzaG93Ijp7ImdyaWQiOnRydWUsInJpbmdzIjp0cnVlLCJsYWJlbHMiOnRydWUsImNsb3VkIjp0cnVlLCJjaG9yZCI6dHJ1ZSwiYmV0YSI6ZmFsc2UsIm1hcCI6dHJ1ZSwic3BpbiI6ZmFsc2V9LCJyaW5ncyI6eyJwMSI6dHJ1ZSwicDIiOnRydWUsInN1bSI6dHJ1ZSwiZyI6ZmFsc2V9LCJ0aGVtZSI6ImRhcmsiLCJwYW5lbCI6dHJ1ZSwibWluaUJpZyI6ZmFsc2UsImxlZ2VuZE1pbiI6ZmFsc2UsInNlY3MiOnsiY3VydmUiOnRydWUsInBvaW50cyI6dHJ1ZSwic2hhcGUiOnRydWUsInZpZXciOnRydWUsImluc3BlY3RvciI6dHJ1ZSwicmVsYXRpb25zIjp0cnVlLCJ0ZXN0IjpmYWxzZX19" target="_blank" rel="noopener">4G and its mirror image</a></p>
+<p><strong>Do it yourself</strong></p>
+<ol>
+<li>In <strong>Curve</strong>, pick the preset <strong>y² = x³ + 7 over F₂₂₃, Programming Bitcoin</strong>.</li>
+<li>Type <code>4G</code> in <strong>P₁</strong>.</li>
+<li>Click the mirror button next to <strong>P₂</strong> (its tooltip: “Set P₂ = −P₁, the mirror image”).</li>
+<li>Press <strong>3</strong> for the side view.</li>
+<li>In the 3D view, click P₁ and P₂ to pin their cards.</li>
+<li>Read the <strong>Relations</strong> section in the panel.</li>
+</ol>
+</div>
+
+<p><strong>Look at:</strong></p>
+<ul>
+<li>the side view (key <strong>3</strong>): P₁ = 4G = (194, 51) sits on top of the tube and P₂ = (194, 172) straight below it, at
+  the bottom of the tube. The button wrote <code>(194, 172)</code> into P₂: the same x, and 223 − 51 = 172;</li>
+<li>the cards: u, v = 313.184°, 82.332° and 313.184°, 277.668°. The same u, and the two v add up to 360°;</li>
+<li>the faint plane through the middle of the donut, edge-on in this view: P₁ and P₂ are reflections of each other in
+  it, like an object and its image in a still lake;</li>
+<li><strong>Relations</strong>: “P₂ = −P₁: yes: same x, y ↦ p − y, mirror images”, “same x: yes, same meridian ring” and
+  Δv = 164.664°;</li>
+<li>the k rows of the cards: 4 and 17.</li>
+</ul>
+<p><strong>Why:</strong> G has order 21 on this curve, and 4 + 17 = 21. Adding a point to its mirror image gives 𝒪, the point at
+infinity, and 21G is 𝒪, so the mirror image of 4G must be 17G. On Bitcoin’s curve the same rule makes the mirror
+image of G the key n − 1 (in hex, <code>fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140</code>).</p>
+<p>Relations also says <strong>P₁ + P₂</strong> is “𝒪, the point at infinity”, and the <strong>chord</strong> row explains: “vertical line
+x = x₁: it meets the curve only at P, −P and 𝒪”. The dashed ring joining the two points is that vertical line,
+drawn on the donut. <a href="24-chord.html">24 Adding points</a> explains chords.</p>
+<h3 id="example-152-on-the-flat-map-a-flip-about-the-middle-line">Example 15.2 · On the flat map: a flip about the middle line</h3>
+<div class="example" id="ex-15-mirror-flat">
+
+<p><a href="../img/15-mirror-flat.webp"><img loading="lazy" decoding="async" alt="the same pair on the enlarged flat map: P₁ below the dashed middle line, P₂ above it at the same height from it" src="../img/15-mirror-flat.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoicGIyMjMiLCJhIjoiMCIsImIiOiI3IiwicCI6IjIyMyIsImciOiIoNDcsIDcxKSIsInAxIjoiNEciLCJwMiI6IigxOTQsIDE3MikiLCJvcCI6ImFkZCIsInNob3dHIjp0cnVlLCJmb3JjZSI6ZmFsc2UsInNoYXBlIjoidG9ydXMiLCJtYXAiOiJzY2FsZSIsImJpdHMiOjI0LCJzdSI6MjQsInN2IjoxNiwiUiI6MS4yLCJyIjowLjQ2LCJnbGFzcyI6MC41NSwiYmFjayI6MC40LCJzaG93Ijp7ImdyaWQiOnRydWUsInJpbmdzIjp0cnVlLCJsYWJlbHMiOnRydWUsImNsb3VkIjp0cnVlLCJjaG9yZCI6dHJ1ZSwiYmV0YSI6ZmFsc2UsIm1hcCI6dHJ1ZSwic3BpbiI6ZmFsc2V9LCJyaW5ncyI6eyJwMSI6dHJ1ZSwicDIiOnRydWUsInN1bSI6dHJ1ZSwiZyI6ZmFsc2V9LCJ0aGVtZSI6ImRhcmsiLCJwYW5lbCI6dHJ1ZSwibWluaUJpZyI6dHJ1ZSwibGVnZW5kTWluIjpmYWxzZSwic2VjcyI6eyJjdXJ2ZSI6dHJ1ZSwicG9pbnRzIjp0cnVlLCJzaGFwZSI6dHJ1ZSwidmlldyI6dHJ1ZSwiaW5zcGVjdG9yIjp0cnVlLCJyZWxhdGlvbnMiOnRydWUsInRlc3QiOmZhbHNlfX0" target="_blank" rel="noopener">4G and −4G, flat map enlarged</a></p>
+<p><strong>Do it yourself</strong></p>
+<ol>
+<li>In <strong>Curve</strong>, pick the preset <strong>y² = x³ + 7 over F₂₂₃, Programming Bitcoin</strong>.</li>
+<li>Type <code>4G</code> in <strong>P₁</strong>.</li>
+<li>Click the mirror button next to <strong>P₂</strong> (its tooltip: “Set P₂ = −P₁, the mirror image”).</li>
+<li>Click <strong>⤢</strong> on the flat map to enlarge it.</li>
+</ol>
+</div>
+
+<p><strong>Look at:</strong> the enlarged flat map. The dashed line across the middle, marked ½, is y = p/2. P₁ is below it and P₂ is
+above it, exactly as far from the line as P₁, on the same vertical line.</p>
+<p><strong>Why:</strong> y ↦ p − y flips the square upside down around its middle line. That is why the whole cloud of dots on the
+map is symmetric top to bottom: every dot has its mirror image across the line. On the donut, the same flip is the
+reflection in the middle plane.</p>
+<h2 id="the-mirror-on-other-shapes">The mirror on other shapes</h2>
+<p>The visualizer can wrap the same points onto other shapes (<a href="16-nine-shapes.html">16 One set of points, nine shapes</a>).
+It places y on each of them so that the mirror image is still a true reflection. The next four examples show G and −G
+on Bitcoin’s curve.</p>
+<h3 id="example-153-on-the-sphere-north-and-south">Example 15.3 · On the sphere: north and south</h3>
+<div class="example" id="ex-15-sphere">
+
+<p><a href="../img/15-sphere.webp"><img loading="lazy" decoding="async" alt="secp256k1 on the sphere from the side: G in the northern half and −G at the same longitude in the southern half" src="../img/15-sphere.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJrMS1uZWciLCJiYXNlUHJlc2V0IjoiazEtbmVnIiwiYSI6IjAiLCJiIjoiNyIsInAiOiIyXjI1NiAtIDJeMzIgLSA5NzciLCJnIjoiMDI3OWJlNjY3ZWY5ZGNiYmFjNTVhMDYyOTVjZTg3MGIwNzAyOWJmY2RiMmRjZTI4ZDk1OWYyODE1YjE2ZjgxNzk4IiwicDEiOiIwMjc5YmU2NjdlZjlkY2JiYWM1NWEwNjI5NWNlODcwYjA3MDI5YmZjZGIyZGNlMjhkOTU5ZjI4MTViMTZmODE3OTgiLCJwMiI6IjAzNzliZTY2N2VmOWRjYmJhYzU1YTA2Mjk1Y2U4NzBiMDcwMjliZmNkYjJkY2UyOGQ5NTlmMjgxNWIxNmY4MTc5OCIsIm9wIjoiYWRkIiwic2hvd0ciOnRydWUsImZvcmNlIjpmYWxzZSwic2hhcGUiOiJzcGhlcmUiLCJtYXAiOiJzY2FsZSIsImJpdHMiOjI0LCJzdSI6MjQsInN2IjoxNiwiUiI6MS4yLCJyIjowLjQ2LCJnbGFzcyI6MC41NSwiYmFjayI6MC40LCJzaG93Ijp7ImdyaWQiOnRydWUsInJpbmdzIjp0cnVlLCJsYWJlbHMiOnRydWUsImNsb3VkIjp0cnVlLCJjaG9yZCI6dHJ1ZSwiYmV0YSI6ZmFsc2UsIm1hcCI6dHJ1ZSwic3BpbiI6ZmFsc2V9LCJyaW5ncyI6eyJwMSI6dHJ1ZSwicDIiOnRydWUsInN1bSI6dHJ1ZSwiZyI6ZmFsc2V9LCJ0aGVtZSI6ImRhcmsiLCJwYW5lbCI6dHJ1ZSwibWluaUJpZyI6ZmFsc2UsImxlZ2VuZE1pbiI6ZmFsc2UsInNlY3MiOnsiY3VydmUiOnRydWUsInBvaW50cyI6dHJ1ZSwic2hhcGUiOnRydWUsInZpZXciOnRydWUsImluc3BlY3RvciI6dHJ1ZSwicmVsYXRpb25zIjp0cnVlLCJ0ZXN0IjpmYWxzZX19" target="_blank" rel="noopener">G and −G on the sphere</a></p>
+<p><strong>Do it yourself</strong></p>
+<ol>
+<li>In <strong>Curve</strong>, pick the preset <strong>secp256k1: G and −G (mirror pair)</strong>.</li>
+<li>In <strong>Shape</strong>, pick <strong>Sphere</strong> (or press <strong>S</strong> until it shows).</li>
+<li>Press <strong>3</strong> for the side view.</li>
+<li>In the 3D view, click P₁ and P₂ to pin their cards.</li>
+</ol>
+</div>
+
+<p><strong>Look at:</strong> G in the northern half and −G in the southern half, at the same longitude and the same distance from the
+equator.</p>
+<p><strong>Why:</strong> on the sphere y sets the latitude, with y = 0 on the equator. The equator’s plane is the mirror: north and
+south swap, nothing else changes. The same G and −G were 156.853° apart around the tube on the donut.</p>
+<h3 id="example-154-on-the-icosahedron">Example 15.4 · On the icosahedron</h3>
+<div class="example" id="ex-15-icosahedron">
+
+<p><a href="../img/15-icosahedron.webp"><img loading="lazy" decoding="async" alt="secp256k1 on the icosahedron from the side: G above the mirror plane, −G straight below it" src="../img/15-icosahedron.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJrMS1uZWciLCJiYXNlUHJlc2V0IjoiazEtbmVnIiwiYSI6IjAiLCJiIjoiNyIsInAiOiIyXjI1NiAtIDJeMzIgLSA5NzciLCJnIjoiMDI3OWJlNjY3ZWY5ZGNiYmFjNTVhMDYyOTVjZTg3MGIwNzAyOWJmY2RiMmRjZTI4ZDk1OWYyODE1YjE2ZjgxNzk4IiwicDEiOiIwMjc5YmU2NjdlZjlkY2JiYWM1NWEwNjI5NWNlODcwYjA3MDI5YmZjZGIyZGNlMjhkOTU5ZjI4MTViMTZmODE3OTgiLCJwMiI6IjAzNzliZTY2N2VmOWRjYmJhYzU1YTA2Mjk1Y2U4NzBiMDcwMjliZmNkYjJkY2UyOGQ5NTlmMjgxNWIxNmY4MTc5OCIsIm9wIjoiYWRkIiwic2hvd0ciOnRydWUsImZvcmNlIjpmYWxzZSwic2hhcGUiOiJpY29zYWhlZHJvbiIsIm1hcCI6InNjYWxlIiwiYml0cyI6MjQsInN1IjoyNCwic3YiOjE2LCJSIjoxLjIsInIiOjAuNDYsImdsYXNzIjowLjU1LCJiYWNrIjowLjQsInNob3ciOnsiZ3JpZCI6dHJ1ZSwicmluZ3MiOnRydWUsImxhYmVscyI6dHJ1ZSwiY2xvdWQiOnRydWUsImNob3JkIjp0cnVlLCJiZXRhIjpmYWxzZSwibWFwIjp0cnVlLCJzcGluIjpmYWxzZX0sInJpbmdzIjp7InAxIjp0cnVlLCJwMiI6dHJ1ZSwic3VtIjp0cnVlLCJnIjpmYWxzZX0sInRoZW1lIjoiZGFyayIsInBhbmVsIjp0cnVlLCJtaW5pQmlnIjpmYWxzZSwibGVnZW5kTWluIjpmYWxzZSwic2VjcyI6eyJjdXJ2ZSI6dHJ1ZSwicG9pbnRzIjp0cnVlLCJzaGFwZSI6dHJ1ZSwidmlldyI6dHJ1ZSwiaW5zcGVjdG9yIjp0cnVlLCJyZWxhdGlvbnMiOnRydWUsInRlc3QiOmZhbHNlfX0" target="_blank" rel="noopener">G and −G on the icosahedron</a></p>
+<p><strong>Do it yourself</strong></p>
+<ol>
+<li>In <strong>Curve</strong>, pick the preset <strong>secp256k1: G and −G (mirror pair)</strong>.</li>
+<li>In <strong>Shape</strong>, pick <strong>Icosahedron</strong> (or press <strong>S</strong> until it shows).</li>
+<li>Press <strong>3</strong> for the side view.</li>
+<li>In the 3D view, click P₁ and P₂ to pin their cards.</li>
+</ol>
+</div>
+
+<p><strong>Look at:</strong> the icosahedron (a solid with 20 triangular faces) from the side: G straight above −G.</p>
+<p><strong>Why:</strong> the icosahedron carries the sphere’s map pushed outward onto its faces. It is built so that the plane
+through its middle is a mirror of the solid itself, so the reflection still works.</p>
+<h3 id="example-155-on-the-wavy-plane-an-upright-mirror">Example 15.5 · On the wavy plane: an upright mirror</h3>
+<div class="example" id="ex-15-wavy">
+
+<p><a href="../img/15-wavy.webp"><img loading="lazy" decoding="async" alt="secp256k1 on the wavy plane from the top: G and −G mirrored across the middle line" src="../img/15-wavy.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJrMS1uZWciLCJiYXNlUHJlc2V0IjoiazEtbmVnIiwiYSI6IjAiLCJiIjoiNyIsInAiOiIyXjI1NiAtIDJeMzIgLSA5NzciLCJnIjoiMDI3OWJlNjY3ZWY5ZGNiYmFjNTVhMDYyOTVjZTg3MGIwNzAyOWJmY2RiMmRjZTI4ZDk1OWYyODE1YjE2ZjgxNzk4IiwicDEiOiIwMjc5YmU2NjdlZjlkY2JiYWM1NWEwNjI5NWNlODcwYjA3MDI5YmZjZGIyZGNlMjhkOTU5ZjI4MTViMTZmODE3OTgiLCJwMiI6IjAzNzliZTY2N2VmOWRjYmJhYzU1YTA2Mjk1Y2U4NzBiMDcwMjliZmNkYjJkY2UyOGQ5NTlmMjgxNWIxNmY4MTc5OCIsIm9wIjoiYWRkIiwic2hvd0ciOnRydWUsImZvcmNlIjpmYWxzZSwic2hhcGUiOiJ3YXZ5IiwibWFwIjoic2NhbGUiLCJiaXRzIjoyNCwic3UiOjI0LCJzdiI6MTYsIlIiOjEuMiwiciI6MC40NiwiZ2xhc3MiOjAuNTUsImJhY2siOjAuNCwic2hvdyI6eyJncmlkIjp0cnVlLCJyaW5ncyI6dHJ1ZSwibGFiZWxzIjp0cnVlLCJjbG91ZCI6dHJ1ZSwiY2hvcmQiOnRydWUsImJldGEiOmZhbHNlLCJtYXAiOnRydWUsInNwaW4iOmZhbHNlfSwicmluZ3MiOnsicDEiOnRydWUsInAyIjp0cnVlLCJzdW0iOnRydWUsImciOmZhbHNlfSwidGhlbWUiOiJkYXJrIiwicGFuZWwiOnRydWUsIm1pbmlCaWciOmZhbHNlLCJsZWdlbmRNaW4iOmZhbHNlLCJzZWNzIjp7ImN1cnZlIjp0cnVlLCJwb2ludHMiOnRydWUsInNoYXBlIjp0cnVlLCJ2aWV3Ijp0cnVlLCJpbnNwZWN0b3IiOnRydWUsInJlbGF0aW9ucyI6dHJ1ZSwidGVzdCI6ZmFsc2V9fQ" target="_blank" rel="noopener">G and −G on the wavy plane</a></p>
+<p><strong>Do it yourself</strong></p>
+<ol>
+<li>In <strong>Curve</strong>, pick the preset <strong>secp256k1: G and −G (mirror pair)</strong>.</li>
+<li>In <strong>Shape</strong>, pick <strong>Wavy plane</strong> (or press <strong>S</strong> until it shows).</li>
+<li>Press <strong>2</strong> for the top view.</li>
+<li>In the 3D view, click P₁ and P₂ to pin their cards.</li>
+</ol>
+</div>
+
+<p><strong>Look at:</strong> from the top, G and −G lie at equal distances on either side of the middle line of the wavy sheet.</p>
+<p><strong>Why:</strong> the wavy plane is the flat map lifted into 3D with waves. Its mirror is the upright plane through its middle
+line, which is the flat map’s line y = p/2 standing on edge.</p>
+<h3 id="example-156-on-the-trefoil-knot-a-mirror-inside-the-ring">Example 15.6 · On the trefoil knot: a mirror inside the ring</h3>
+<div class="example" id="ex-15-trefoil">
+
+<p><a href="../img/15-trefoil.webp"><img loading="lazy" decoding="async" alt="secp256k1 on the trefoil knot: G and −G on one ring of the tube, reflections of each other inside that ring" src="../img/15-trefoil.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJrMS1uZWciLCJiYXNlUHJlc2V0IjoiazEtbmVnIiwiYSI6IjAiLCJiIjoiNyIsInAiOiIyXjI1NiAtIDJeMzIgLSA5NzciLCJnIjoiMDI3OWJlNjY3ZWY5ZGNiYmFjNTVhMDYyOTVjZTg3MGIwNzAyOWJmY2RiMmRjZTI4ZDk1OWYyODE1YjE2ZjgxNzk4IiwicDEiOiIwMjc5YmU2NjdlZjlkY2JiYWM1NWEwNjI5NWNlODcwYjA3MDI5YmZjZGIyZGNlMjhkOTU5ZjI4MTViMTZmODE3OTgiLCJwMiI6IjAzNzliZTY2N2VmOWRjYmJhYzU1YTA2Mjk1Y2U4NzBiMDcwMjliZmNkYjJkY2UyOGQ5NTlmMjgxNWIxNmY4MTc5OCIsIm9wIjoiYWRkIiwic2hvd0ciOnRydWUsImZvcmNlIjpmYWxzZSwic2hhcGUiOiJ0cmVmb2lsIiwibWFwIjoic2NhbGUiLCJiaXRzIjoyNCwic3UiOjI0LCJzdiI6MTYsIlIiOjEuMiwiciI6MC40NiwiZ2xhc3MiOjAuNTUsImJhY2siOjAuNCwic2hvdyI6eyJncmlkIjp0cnVlLCJyaW5ncyI6dHJ1ZSwibGFiZWxzIjp0cnVlLCJjbG91ZCI6dHJ1ZSwiY2hvcmQiOnRydWUsImJldGEiOmZhbHNlLCJtYXAiOnRydWUsInNwaW4iOmZhbHNlfSwicmluZ3MiOnsicDEiOnRydWUsInAyIjp0cnVlLCJzdW0iOnRydWUsImciOmZhbHNlfSwidGhlbWUiOiJkYXJrIiwicGFuZWwiOnRydWUsIm1pbmlCaWciOmZhbHNlLCJsZWdlbmRNaW4iOmZhbHNlLCJzZWNzIjp7ImN1cnZlIjp0cnVlLCJwb2ludHMiOnRydWUsInNoYXBlIjp0cnVlLCJ2aWV3Ijp0cnVlLCJpbnNwZWN0b3IiOnRydWUsInJlbGF0aW9ucyI6dHJ1ZSwidGVzdCI6ZmFsc2V9fQ" target="_blank" rel="noopener">G and −G on the trefoil</a></p>
+<p><strong>Do it yourself</strong></p>
+<ol>
+<li>In <strong>Curve</strong>, pick the preset <strong>secp256k1: G and −G (mirror pair)</strong>.</li>
+<li>In <strong>Shape</strong>, pick <strong>Trefoil knot</strong> (or press <strong>S</strong> until it shows).</li>
+<li>In the 3D view, click P₁ and P₂ to pin their cards.</li>
+</ol>
+</div>
+
+<p><strong>Look at:</strong> G and −G on the same ring around the knotted tube, on opposite sides of it.</p>
+<p><strong>Why:</strong> a knot has a handedness, like a left and a right glove: no mirror turns the knot into itself, so there is no
+mirror plane for the whole shape. The visualizer still keeps −P a reflection, but a local one: P is mirrored inside
+its own ring, across the plane that runs along the knot through the middle of that ring.</p>
+<h2 id="try-it-yourself">Try it yourself</h2>
+<ul>
+<li>In Example 15.1, type other multiples into P₁ (<code>2G</code>, <code>7G</code>, <code>10G</code>) and press the mirror button each time. The two
+  k always add up to 21.</li>
+<li>On Bitcoin’s curve, type <code>02</code> followed by any key’s x into P₁ and <code>03</code> with the same x into P₂ (copy the x from the
+  Inspector). Relations always says they are mirror images.</li>
+<li>Press <strong>S</strong> with Example 15.1 open and watch the pair on every shape; on the trefoil, look for the shared ring.</li>
+</ul>
+<h2 id="recap">Recap</h2>
+<ul>
+<li>Every point P = (x, y) has a mirror image −P = (x, p − y); a point plus its mirror image is 𝒪.</li>
+<li>02 and 03 in front of the same x name the two mirror images: one has an even y, the other an odd y.</li>
+<li>On the donut −P is the reflection in the middle plane (edge-on in the side view); on the flat map it is a flip about
+  y = p/2; every other shape keeps it a reflection.</li>
+</ul>
+<p>Next: <a href="16-nine-shapes.html">16 One set of points, nine shapes</a>.</p>
+<nav class="pn" aria-label="Previous and next"><a class="prev" href="14-how-far-apart.html"><small>← previous</small>14 · Two points: how far apart?</a><a class="next" href="16-nine-shapes.html"><small>next →</small>16 · One set of points, nine shapes</a></nav>
+<footer class="foot"><p>Tutorials for <i>Elliptic curve → torus</i> v3.2.2, the single-file visualizer by Idle (idlebg.com). Every example link opens the visualizer at the top of the repository.</p>
+<nav class="links" aria-label="Project links"><a class="pill" href="https://github.com/idlebg/EllipticTorus3d" target="_blank" rel="noopener" title="Source code, tests and releases (MIT)"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><path d="m5.5 4.5-3.5 3.5 3.5 3.5M10.5 4.5 14 8l-3.5 3.5M9.2 2.8 6.8 13.2"/></svg>Source on GitHub</a><a class="pill" href="https://idlebg.com/idleGevrek/" target="_blank" rel="noopener" title="Ready-made states with screenshots and a tour video"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1.2"/><rect x="9" y="2" width="5" height="5" rx="1.2"/><rect x="2" y="9" width="5" height="5" rx="1.2"/><rect x="9" y="9" width="5" height="5" rx="1.2"/></svg>Gallery and tour</a><a class="pill" href="https://idlebg.com/idleGevrek/tutorials/" target="_blank" rel="noopener" title="These tutorials on idlebg.com"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><path d="M8 4.5C6.6 3.4 4.6 3 2.5 3.2v9c2.1-.2 4.1.2 5.5 1.3 1.4-1.1 3.4-1.5 5.5-1.3v-9C11.4 3 9.4 3.4 8 4.5zM8 4.5v9"/></svg>Tutorials online</a></nav></footer>
+</main>
+</div>
+</body>
+</html>

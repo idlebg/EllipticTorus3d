@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>13 Why a donut · Elliptic curve → torus · tutorials</title>
+<meta name="description" content="13 Why a donut: numbers that wrap around, the flat map, guide rings. Tutorials for Elliptic curve → torus, the single-file offline visualizer of elliptic curves over finite fields: how to use it and what it shows, with checked worked examples from first steps to Bitcoin keys and research.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23070b10'/%3E%3Cellipse cx='32' cy='33' rx='23' ry='14' fill='none' stroke='%232de2e6' stroke-width='5'/%3E%3Cpath d='M21 31c6 5 16 5 22 0M24 34c5-3 11-3 16 0' fill='none' stroke='%232de2e6' stroke-width='3.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root { color-scheme: light dark; --bg: #f6f4ee; --panel: #fffdf8; --panel-2: #efece3; --line: #ddd8cb; --text: #1d2530;
+  --muted: #5d6874; --accent: #08797d; --accent-2: #b35c00; --code: #ece8dd; --shadow: 0 1px 2px rgba(0,0,0,.06);
+  --font: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --mono: "Cascadia Mono", "Cascadia Code", Consolas, "SF Mono", Menlo, monospace; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #070b10; --panel: #0b1118; --panel-2: #0f1822; --line: #1c2a37; --text: #d5e1ea; --muted: #8b9cad;
+    --accent: #2de2e6; --accent-2: #ffb547; --code: #111c27; --shadow: none; } }
+* { box-sizing: border-box; }
+html { scroll-padding-top: 12px; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.62 var(--font); }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:hover { text-decoration-thickness: 2px; }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); min-height: 100vh; }
+.side { position: sticky; top: 0; height: 100vh; overflow: auto; padding: 20px 18px 40px; border-right: 1px solid var(--line);
+  background: var(--panel); font-size: 14px; line-height: 1.45; }
+.side .brand { display: block; font-weight: 650; font-size: 15px; color: var(--text); text-decoration: none; margin-bottom: 2px; }
+.side .brand b { color: var(--accent); font-weight: 500; }
+.side .sub { color: var(--muted); font-size: 12.5px; margin: 0 0 12px; }
+.side .links { margin: 0 0 6px; }
+.side h4 { margin: 18px 0 6px; font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.side ol { list-style: none; margin: 0; padding: 0; }
+.side li a { display: flex; gap: 8px; padding: 3px 8px; border-radius: 6px; color: var(--text); text-decoration: none; }
+.side li a span { color: var(--muted); min-width: 1.6em; font-variant-numeric: tabular-nums; }
+.side li a:hover { background: var(--panel-2); }
+.side li a[aria-current] { background: var(--panel-2); color: var(--accent); font-weight: 600; box-shadow: inset 2px 0 0 var(--accent); }
+.side li a:focus-visible { outline-offset: -2px; }
+.side .top a { font-weight: 600; }
+.side details summary { display: none; }
+svg.ic { fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.links { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px 4px 9px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--panel-2); background: color-mix(in srgb, var(--accent) 7%, var(--panel)); color: var(--text);
+  font-size: 12.5px; font-weight: 600; line-height: 1.35; text-decoration: none; white-space: nowrap;
+  transition: color .15s, border-color .15s, background-color .15s; }
+.pill .ic { width: 14px; height: 14px; flex: none; color: var(--accent); }
+.pill:hover { color: var(--accent); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--panel)); }
+.pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 999px; }
+main { padding: 28px clamp(18px, 4vw, 56px) 64px; max-width: 1020px; }
+main > .crumb { color: var(--muted); font-size: 13px; margin-bottom: 6px; }
+h1 { font-size: 30px; line-height: 1.2; margin: 4px 0 14px; letter-spacing: -.01em; }
+h2 { font-size: 22px; margin: 40px 0 10px; padding-top: 14px; border-top: 1px solid var(--line); }
+h3 { font-size: 18px; margin: 30px 0 8px; }
+h4 { font-size: 16px; margin: 22px 0 6px; }
+p, ul, ol, table, pre, blockquote { margin: 10px 0 14px; }
+li { margin: 3px 0; }
+code { font: 0.88em/1.4 var(--mono); background: var(--code); border-radius: 4px; padding: 1px 4px; overflow-wrap: anywhere; }
+pre { background: var(--code); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow: auto; }
+pre code { background: none; padding: 0; overflow-wrap: normal; }
+kbd { font: 12.5px var(--mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; display: block; overflow-x: auto; }
+th, td { border: 1px solid var(--line); padding: 6px 9px; text-align: left; vertical-align: top; }
+th { background: var(--panel-2); font-weight: 600; }
+td code { overflow-wrap: anywhere; }
+blockquote { border-left: 3px solid var(--accent); margin-left: 0; padding: 2px 14px; color: var(--muted); background: var(--panel); border-radius: 0 6px 6px 0; }
+img { max-width: 100%; height: auto; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 28px 0; }
+.example { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 12px 16px 6px; margin: 14px 0 18px; box-shadow: var(--shadow); }
+.example > p:first-child { margin-top: 2px; }
+.example img { display: block; border-radius: 8px; border: 1px solid var(--line); }
+.example .open a { display: inline-block; background: var(--accent); color: var(--bg); font-weight: 650; text-decoration: none; border-radius: 7px; padding: 5px 12px; }
+.example .open a:hover { filter: brightness(1.1); }
+.example .open a:focus-visible { outline-offset: 3px; }
+.example ol { font-size: 15px; }
+.example table { font-size: 14px; }
+.pn { display: flex; justify-content: space-between; gap: 14px; margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); }
+.pn a { display: block; max-width: 48%; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; text-decoration: none; background: var(--panel); }
+.pn a small { display: block; color: var(--muted); font-size: 12px; }
+.pn a.next { margin-left: auto; text-align: right; }
+.pn a:focus-visible { border-radius: 10px; }
+footer.foot { color: var(--muted); font-size: 12.5px; margin-top: 30px; padding-top: 14px; border-top: 1px solid var(--line); }
+footer.foot p { margin: 0 0 10px; }
+.toc-inline { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 16px; font-size: 14.5px; }
+/* all-examples page: filters by level without script (radio buttons + sibling selectors) */
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 18px; }
+.filters input { position: absolute; opacity: 0; pointer-events: none; }
+.filters label { border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; cursor: pointer; font-size: 14px; background: var(--panel); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.card { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); overflow: hidden; display: flex; flex-direction: column; }
+.card img { display: block; width: 100%; aspect-ratio: 1068 / 900; object-fit: cover; border-bottom: 1px solid var(--line); }
+.card .b { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.card h3 { margin: 0; font-size: 15px; }
+.card .meta { color: var(--muted); font-size: 12.5px; }
+.card .acts { margin-top: auto; display: flex; gap: 12px; font-size: 14px; }
+#f-all:checked ~ .filters label[for="f-all"], #f-1:checked ~ .filters label[for="f-1"], #f-2:checked ~ .filters label[for="f-2"],
+#f-3:checked ~ .filters label[for="f-3"], #f-4:checked ~ .filters label[for="f-4"], #f-9:checked ~ .filters label[for="f-9"] {
+  background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
+#f-all:focus-visible ~ .filters label[for="f-all"], #f-1:focus-visible ~ .filters label[for="f-1"], #f-2:focus-visible ~ .filters label[for="f-2"],
+#f-3:focus-visible ~ .filters label[for="f-3"], #f-4:focus-visible ~ .filters label[for="f-4"], #f-9:focus-visible ~ .filters label[for="f-9"] {
+  outline: 2px solid var(--accent); outline-offset: 2px; }
+#f-1:checked ~ .grid .card:not(.l1), #f-2:checked ~ .grid .card:not(.l2), #f-3:checked ~ .grid .card:not(.l3),
+#f-4:checked ~ .grid .card:not(.l4), #f-9:checked ~ .grid .card:not(.l9) { display: none; }
+.radios { position: absolute; opacity: 0; pointer-events: none; }
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .side { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+  .side details summary { display: block; cursor: pointer; color: var(--accent); font-weight: 600; margin: 6px 0; }
+  .side details:not([open]) > ol, .side details:not([open]) > h4 { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .pill { transition: none; } }
+@media print { .side, .pn, .foot .links { display: none; } .layout { display: block; } main { max-width: none; } }
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="side" aria-label="Contents">
+<a class="brand" href="../index.html">Elliptic curve <b>→</b> torus</a>
+<p class="sub">Tutorials for the visualizer v3.2.2. Offline; nothing is loaded from the network.</p>
+<div class="links"><a class="pill" href="https://github.com/idlebg/EllipticTorus3d" target="_blank" rel="noopener" title="Source code, tests and releases (MIT)"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><path d="m5.5 4.5-3.5 3.5 3.5 3.5M10.5 4.5 14 8l-3.5 3.5M9.2 2.8 6.8 13.2"/></svg>Source on GitHub</a><a class="pill" href="https://idlebg.com/idleGevrek/" target="_blank" rel="noopener" title="Ready-made states with screenshots and a tour video"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1.2"/><rect x="9" y="2" width="5" height="5" rx="1.2"/><rect x="2" y="9" width="5" height="5" rx="1.2"/><rect x="9" y="9" width="5" height="5" rx="1.2"/></svg>Gallery and tour</a><a class="pill" href="https://idlebg.com/idleGevrek/tutorials/" target="_blank" rel="noopener" title="These tutorials on idlebg.com"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><path d="M8 4.5C6.6 3.4 4.6 3 2.5 3.2v9c2.1-.2 4.1.2 5.5 1.3 1.4-1.1 3.4-1.5 5.5-1.3v-9C11.4 3 9.4 3.4 8 4.5zM8 4.5v9"/></svg>Tutorials online</a></div>
+<details open><summary>Contents</summary>
+<ol class="top"><li><a href="../index.html"><span>·</span>Start page</a></li><li><a href="../examples.html"><span>·</span>All examples</a></li></ol>
+<h4>Level 1 · Explorer</h4><ol>
+<li><a href="11-start-here.html"><span>11</span>Start here</a></li>
+<li><a href="12-cloud-of-dots.html"><span>12</span>A curve is a cloud of dots</a></li>
+<li><a href="13-why-a-donut.html" aria-current="page"><span>13</span>Why a donut</a></li>
+<li><a href="14-how-far-apart.html"><span>14</span>Two points: how far apart?</a></li>
+<li><a href="15-mirror-images.html"><span>15</span>Mirror images: 02 and 03</a></li>
+<li><a href="16-nine-shapes.html"><span>16</span>One set of points, nine shapes</a></li>
+<li><a href="17-save-share-export.html"><span>17</span>Save, share, export</a></li>
+<li><a href="18-make-it-look-right.html"><span>18</span>Make it look right</a></li>
+</ol>
+<h4>Level 2 · Learner</h4><ol>
+<li><a href="21-clock-arithmetic.html"><span>21</span>Clock arithmetic and the curve equation</a></li>
+<li><a href="22-counting-points.html"><span>22</span>Counting points</a></li>
+<li><a href="23-negation.html"><span>23</span>Negation</a></li>
+<li><a href="24-chord.html"><span>24</span>Adding points: the chord</a></li>
+<li><a href="25-tangent.html"><span>25</span>Doubling: the tangent</a></li>
+<li><a href="26-subtraction.html"><span>26</span>Subtraction</a></li>
+<li><a href="27-walking-multiples.html"><span>27</span>Walking the multiples</a></li>
+<li><a href="28-orders-subgroups.html"><span>28</span>Orders and subgroups</a></li>
+<li><a href="29-discrete-logs.html"><span>29</span>Discrete logs on toy curves</a></li>
+</ol>
+<h4>Level 3 · Bitcoiner</h4><ol>
+<li><a href="31-secp256k1.html"><span>31</span>secp256k1 in the panel</a></li>
+<li><a href="32-private-to-public.html"><span>32</span>Private key → public key</a></li>
+<li><a href="33-key-formats.html"><span>33</span>Key formats</a></li>
+<li><a href="34-parity-taproot.html"><span>34</span>Parity, 02/03 and Taproot</a></li>
+<li><a href="35-glv.html"><span>35</span>The GLV endomorphism</a></li>
+<li><a href="36-invalid-points.html"><span>36</span>Invalid points</a></li>
+<li><a href="37-points-in-bitcoin.html"><span>37</span>Where points appear in Bitcoin</a></li>
+<li><a href="39-p256.html"><span>39</span>P-256 next to secp256k1</a></li>
+</ol>
+<h4>Level 4 · Researcher</h4><ol>
+<li><a href="41-mapping.html"><span>41</span>The mapping</a></li>
+<li><a href="42-group-structure.html"><span>42</span>Group structure</a></li>
+<li><a href="43-j-zero.html"><span>43</span>j = 0 and its automorphisms</a></li>
+<li><a href="44-twists.html"><span>44</span>Quadratic twists</a></li>
+<li><a href="45-invalid-curve-attacks.html"><span>45</span>Invalid-curve attacks</a></li>
+<li><a href="46-singular-composite.html"><span>46</span>Singular curves and composite moduli</a></li>
+<li><a href="47-shapes-topology.html"><span>47</span>Shapes as topology</a></li>
+<li><a href="48-scripting.html"><span>48</span>Scripting with ecTorus</a></li>
+<li><a href="49-trusting-numbers.html"><span>49</span>Trusting the numbers</a></li>
+</ol>
+<h4>Reference</h4><ol>
+<li><a href="91-cookbook.html"><span>91</span>Cookbook</a></li>
+<li><a href="92-exercises.html"><span>92</span>Exercises</a></li>
+<li><a href="93-answers.html"><span>93</span>Answers to the exercises</a></li>
+<li><a href="94-glossary.html"><span>94</span>Glossary</a></li>
+<li><a href="95-faq.html"><span>95</span>FAQ and troubleshooting</a></li>
+<li><a href="96-for-teachers.html"><span>96</span>For teachers</a></li>
+</ol>
+</details>
+</nav>
+<main>
+<div class="crumb">Level 1 · Explorer · chapter 13</div>
+<h1 id="13-why-a-donut">13 Why a donut</h1>
+<p><strong>Level 1 · Explorer.</strong> You will learn why the points of a curve live on a donut, how the flat map in the corner is
+the same donut cut open, and how to read a point’s position from its two rings. Read first:
+<a href="12-cloud-of-dots.html">12 A curve is a cloud of dots</a>.</p>
+<h2 id="numbers-on-a-clock">Numbers on a clock</h2>
+<p>On a clock, after 12 comes 1 again: the hours wrap around. The curves in this visualizer count the same way, on a
+clock with p hours. On the toy curve F₂₂₃ the “hours” are 0, 1, 2 and so on up to 222, and after 222 comes 0 again.
+<a href="21-clock-arithmetic.html">21 Clock arithmetic</a> does the sums; here we only need the wrapping.</p>
+<p>Both coordinates of a point wrap like this. So think of all possible pairs (x, y) as a square: x runs across from 0
+to 222, y runs up from 0 to 222. Now:</p>
+<ol>
+<li>x wraps: just past the right edge (x = 222) comes the left edge (x = 0). Glue the right edge to the left edge and
+   the square becomes a <strong>tube</strong>.</li>
+<li>y wraps too: just past the top edge comes the bottom edge. Bend the tube round and glue its two ends together, and
+   it becomes a <strong>donut</strong>, which mathematicians call a <a href="94-glossary.html#torus">torus</a>.</li>
+</ol>
+<p>That is the whole idea of the visualizer. The donut is not a decoration: it is the only shape on which both
+coordinates wrap the way the numbers do.</p>
+<ul>
+<li>x sets the angle <strong>u around the hole</strong>: u = 360° × x / p.</li>
+<li>y sets the angle <strong>v around the tube</strong>: v = 360° × y / p.</li>
+</ul>
+<h3 id="example-131-the-flat-map-is-the-donut-cut-open">Example 13.1 · The flat map is the donut cut open</h3>
+<div class="example" id="ex-13-flat-big">
+
+<p><a href="../img/13-flat-big.webp"><img loading="lazy" decoding="async" alt="F₂₂₃ with G pinned on the torus, and the flat map enlarged: the same dots on a square, G marked on both" src="../img/13-flat-big.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoicGIyMjMiLCJhIjoiMCIsImIiOiI3IiwicCI6IjIyMyIsImciOiIoNDcsIDcxKSIsInAxIjoiKDQ3LCA3MSkiLCJwMiI6IiIsIm9wIjoiYWRkIiwic2hvd0ciOnRydWUsImZvcmNlIjpmYWxzZSwic2hhcGUiOiJ0b3J1cyIsIm1hcCI6InNjYWxlIiwiYml0cyI6MjQsInN1IjoyNCwic3YiOjE2LCJSIjoxLjIsInIiOjAuNDYsImdsYXNzIjowLjU1LCJiYWNrIjowLjQsInNob3ciOnsiZ3JpZCI6dHJ1ZSwicmluZ3MiOnRydWUsImxhYmVscyI6dHJ1ZSwiY2xvdWQiOnRydWUsImNob3JkIjpmYWxzZSwiYmV0YSI6ZmFsc2UsIm1hcCI6dHJ1ZSwic3BpbiI6ZmFsc2V9LCJyaW5ncyI6eyJwMSI6dHJ1ZSwicDIiOnRydWUsInN1bSI6dHJ1ZSwiZyI6ZmFsc2V9LCJ0aGVtZSI6ImRhcmsiLCJwYW5lbCI6dHJ1ZSwibWluaUJpZyI6dHJ1ZSwibGVnZW5kTWluIjpmYWxzZSwic2VjcyI6eyJjdXJ2ZSI6dHJ1ZSwicG9pbnRzIjp0cnVlLCJzaGFwZSI6dHJ1ZSwidmlldyI6dHJ1ZSwiaW5zcGVjdG9yIjp0cnVlLCJyZWxhdGlvbnMiOnRydWUsInRlc3QiOmZhbHNlfX0" target="_blank" rel="noopener">F₂₂₃, flat map enlarged</a></p>
+<p><strong>Do it yourself</strong></p>
+<ol>
+<li>In <strong>Curve</strong>, pick the preset <strong>y² = x³ + 7 over F₂₂₃, Programming Bitcoin</strong>.</li>
+<li>Empty <strong>P₂</strong>.</li>
+<li>In <strong>Display</strong>, turn off <strong>Chord construction</strong> (<strong>K</strong>).</li>
+<li>Click <strong>⤢</strong> on the flat map to enlarge it.</li>
+<li>In the 3D view, click P₁ to pin its card.</li>
+</ol>
+</div>
+
+<p><strong>Look at:</strong></p>
+<ul>
+<li>the enlarged flat map: the square, with x across and y up, and every dot of the curve. G = (47, 71), which is
+  also P₁ here, is the cyan dot inside a purple ring, circled because it is pinned;</li>
+<li>the same G on the donut, and its card: u, v = 75.874°, 114.619°. That is 47/223 and 71/223 of a full turn;</li>
+<li>the dashed line across the middle of the map, marked ½: the mirror line. <a href="15-mirror-images.html">15 Mirror images</a>
+  explains it;</li>
+<li>the grey labels on the donut, x = 0, 56, 112 and 167, and the same for y: they mark the quarter turns.</li>
+</ul>
+<p><strong>Why:</strong> the map and the donut hold exactly the same dots; the map is just the donut cut along two rings and laid
+flat. Click ⤢ to enlarge it or shrink it again. Hovering and clicking work on the map too.</p>
+<h3 id="example-132-from-the-top-x-goes-around-the-hole">Example 13.2 · From the top: x goes around the hole</h3>
+<div class="example" id="ex-13-top">
+
+<p><a href="../img/13-top.webp"><img loading="lazy" decoding="async" alt="F₂₂₃ from the top: P₁ = (1, 30) with its ring around the hole, and the labels x = 0, 56, 112 and 167 at quarter turns" src="../img/13-top.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoicGIyMjMiLCJhIjoiMCIsImIiOiI3IiwicCI6IjIyMyIsImciOiIoNDcsIDcxKSIsInAxIjoiKDEsIDMwKSIsInAyIjoiIiwib3AiOiJhZGQiLCJzaG93RyI6dHJ1ZSwiZm9yY2UiOmZhbHNlLCJzaGFwZSI6InRvcnVzIiwibWFwIjoic2NhbGUiLCJiaXRzIjoyNCwic3UiOjI0LCJzdiI6MTYsIlIiOjEuMiwiciI6MC40NiwiZ2xhc3MiOjAuNTUsImJhY2siOjAuNCwic2hvdyI6eyJncmlkIjp0cnVlLCJyaW5ncyI6dHJ1ZSwibGFiZWxzIjp0cnVlLCJjbG91ZCI6dHJ1ZSwiY2hvcmQiOmZhbHNlLCJiZXRhIjpmYWxzZSwibWFwIjp0cnVlLCJzcGluIjpmYWxzZX0sInJpbmdzIjp7InAxIjp0cnVlLCJwMiI6dHJ1ZSwic3VtIjp0cnVlLCJnIjpmYWxzZX0sInRoZW1lIjoiZGFyayIsInBhbmVsIjp0cnVlLCJtaW5pQmlnIjpmYWxzZSwibGVnZW5kTWluIjpmYWxzZSwic2VjcyI6eyJjdXJ2ZSI6dHJ1ZSwicG9pbnRzIjp0cnVlLCJzaGFwZSI6dHJ1ZSwidmlldyI6dHJ1ZSwiaW5zcGVjdG9yIjp0cnVlLCJyZWxhdGlvbnMiOnRydWUsInRlc3QiOmZhbHNlfX0" target="_blank" rel="noopener">F₂₂₃, top view</a></p>
+<p><strong>Do it yourself</strong></p>
+<ol>
+<li>In <strong>Curve</strong>, pick the preset <strong>y² = x³ + 7 over F₂₂₃, Programming Bitcoin</strong>.</li>
+<li>Type <code>(1, 30)</code> in <strong>P₁</strong>.</li>
+<li>Empty <strong>P₂</strong>.</li>
+<li>In <strong>Display</strong>, turn off <strong>Chord construction</strong> (<strong>K</strong>).</li>
+<li>Press <strong>2</strong> for the top view.</li>
+<li>In the 3D view, click P₁ to pin its card.</li>
+</ol>
+</div>
+
+<p>Here P₁ is the dot (1, 30), and P₂ is empty.</p>
+<p><strong>Look at:</strong> from the top (key <strong>2</strong>), P₁’s ring around the hole is a full circle, and the labels x = 0, x = 56,
+x = 112 and x = 167 sit a quarter turn from each other, like the 12, 3, 6 and 9 of a clock face. P₁ itself, at
+x = 1, sits just past the label x = 0; its card says u, v = 1.614°, 48.430°.</p>
+<p><strong>Why:</strong> from the top you see the angle u directly: every point with the same x lies on the same line out from the
+centre, and walking once around the hole runs x through all 223 values.</p>
+<h3 id="example-133-from-the-side-y-goes-around-the-tube">Example 13.3 · From the side: y goes around the tube</h3>
+<div class="example" id="ex-13-side">
+
+<p><a href="../img/13-side.webp"><img loading="lazy" decoding="async" alt="F₂₂₃ from the side: P₁ = (1, 30) on the tube’s right-hand cross-section, with its ring around the tube" src="../img/13-side.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoicGIyMjMiLCJhIjoiMCIsImIiOiI3IiwicCI6IjIyMyIsImciOiIoNDcsIDcxKSIsInAxIjoiKDEsIDMwKSIsInAyIjoiIiwib3AiOiJhZGQiLCJzaG93RyI6dHJ1ZSwiZm9yY2UiOmZhbHNlLCJzaGFwZSI6InRvcnVzIiwibWFwIjoic2NhbGUiLCJiaXRzIjoyNCwic3UiOjI0LCJzdiI6MTYsIlIiOjEuMiwiciI6MC40NiwiZ2xhc3MiOjAuNTUsImJhY2siOjAuNCwic2hvdyI6eyJncmlkIjp0cnVlLCJyaW5ncyI6dHJ1ZSwibGFiZWxzIjp0cnVlLCJjbG91ZCI6dHJ1ZSwiY2hvcmQiOmZhbHNlLCJiZXRhIjpmYWxzZSwibWFwIjp0cnVlLCJzcGluIjpmYWxzZX0sInJpbmdzIjp7InAxIjp0cnVlLCJwMiI6dHJ1ZSwic3VtIjp0cnVlLCJnIjpmYWxzZX0sInRoZW1lIjoiZGFyayIsInBhbmVsIjp0cnVlLCJtaW5pQmlnIjpmYWxzZSwibGVnZW5kTWluIjpmYWxzZSwic2VjcyI6eyJjdXJ2ZSI6dHJ1ZSwicG9pbnRzIjp0cnVlLCJzaGFwZSI6dHJ1ZSwidmlldyI6dHJ1ZSwiaW5zcGVjdG9yIjp0cnVlLCJyZWxhdGlvbnMiOnRydWUsInRlc3QiOmZhbHNlfX0" target="_blank" rel="noopener">F₂₂₃, side view</a></p>
+<p><strong>Do it yourself</strong></p>
+<ol>
+<li>In <strong>Curve</strong>, pick the preset <strong>y² = x³ + 7 over F₂₂₃, Programming Bitcoin</strong>.</li>
+<li>Type <code>(1, 30)</code> in <strong>P₁</strong>.</li>
+<li>Empty <strong>P₂</strong>.</li>
+<li>In <strong>Display</strong>, turn off <strong>Chord construction</strong> (<strong>K</strong>).</li>
+<li>Press <strong>3</strong> for the side view.</li>
+<li>In the 3D view, click P₁ to pin its card.</li>
+</ol>
+</div>
+
+<p><strong>Look at:</strong> from the side (key <strong>3</strong>), the donut’s two ends show the tube’s round cross-section. P₁ sits on the
+right-hand one, and its other ring, the one around the tube, is exactly that cross-section.</p>
+<p><strong>Why:</strong> y sets the angle v around the tube. y = 0 is on the outside of the donut, halfway round the tube (y near 112)
+is on the inside, next to the hole, and the top and bottom of the tube are a quarter of the way (y = 56 and y = 167).</p>
+<p>Every point has two <strong>guide rings</strong>, one of each kind:</p>
+<ul>
+<li>the ring <strong>around the tube</strong> passes through every place with the same x (mathematicians call it a meridian);</li>
+<li>the ring <strong>around the hole</strong> passes through every place with the same y (a parallel).</li>
+</ul>
+<p>Two points on the same ring around the tube share their x; two on the same ring around the hole share their y. The
+<strong>Relations</strong> section reports both (“same x”, “same y”), and they matter a lot in
+<a href="15-mirror-images.html">15 Mirror images</a> and <a href="35-glv.html">35 The GLV endomorphism</a>.</p>
+<h3 id="example-134-neighbours-across-the-x-seam">Example 13.4 · Neighbours across the x seam</h3>
+<p>On the curve there are no points with x = 221 or x = 222, but there are (220, 42) and (1, 30).</p>
+<div class="example" id="ex-13-seam-x">
+
+<p><a href="../img/13-seam-x.webp"><img loading="lazy" decoding="async" alt="F₂₂₃ with P₁ = (220, 42) and P₂ = (1, 30) side by side on the torus, while the flat map puts them at its right and left edges" src="../img/13-seam-x.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoicGIyMjMiLCJhIjoiMCIsImIiOiI3IiwicCI6IjIyMyIsImciOiIoNDcsIDcxKSIsInAxIjoiKDIyMCwgNDIpIiwicDIiOiIoMSwgMzApIiwib3AiOiJhZGQiLCJzaG93RyI6dHJ1ZSwiZm9yY2UiOmZhbHNlLCJzaGFwZSI6InRvcnVzIiwibWFwIjoic2NhbGUiLCJiaXRzIjoyNCwic3UiOjI0LCJzdiI6MTYsIlIiOjEuMiwiciI6MC40NiwiZ2xhc3MiOjAuNTUsImJhY2siOjAuNCwic2hvdyI6eyJncmlkIjp0cnVlLCJyaW5ncyI6dHJ1ZSwibGFiZWxzIjp0cnVlLCJjbG91ZCI6dHJ1ZSwiY2hvcmQiOmZhbHNlLCJiZXRhIjpmYWxzZSwibWFwIjp0cnVlLCJzcGluIjpmYWxzZX0sInJpbmdzIjp7InAxIjp0cnVlLCJwMiI6dHJ1ZSwic3VtIjpmYWxzZSwiZyI6ZmFsc2V9LCJ0aGVtZSI6ImRhcmsiLCJwYW5lbCI6dHJ1ZSwibWluaUJpZyI6ZmFsc2UsImxlZ2VuZE1pbiI6ZmFsc2UsInNlY3MiOnsiY3VydmUiOnRydWUsInBvaW50cyI6dHJ1ZSwic2hhcGUiOnRydWUsInZpZXciOnRydWUsImluc3BlY3RvciI6dHJ1ZSwicmVsYXRpb25zIjp0cnVlLCJ0ZXN0IjpmYWxzZX19" target="_blank" rel="noopener">(220, 42) and (1, 30)</a></p>
+<p><strong>Do it yourself</strong></p>
+<ol>
+<li>In <strong>Curve</strong>, pick the preset <strong>y² = x³ + 7 over F₂₂₃, Programming Bitcoin</strong>.</li>
+<li>Type <code>(220, 42)</code> in <strong>P₁</strong> and <code>(1, 30)</code> in <strong>P₂</strong>.</li>
+<li>In <strong>Display</strong>, turn off <strong>Chord construction</strong> (<strong>K</strong>).</li>
+<li>Under <strong>Guide rings for</strong>, turn off <strong>Result</strong>.</li>
+<li>In the 3D view, click P₁ and P₂ to pin their cards.</li>
+<li>Read the <strong>Relations</strong> section in the panel.</li>
+</ol>
+</div>
+
+<p><strong>Look at:</strong> on the donut the two points sit side by side; on the flat map in the corner one is at the far right and
+the other at the far left. Relations says Δu = 6.457°: only four steps apart around the hole (220, 221, 222, 0, 1).
+Around the tube they are Δv = 19.372° apart, since their y values are 42 and 30.</p>
+<p><strong>Why:</strong> the flat map has to cut the donut somewhere, and it cuts at x = 0. Points on either side of the cut look far
+apart on the map but are neighbours on the donut. The donut has no edges, so it never lies about distances.</p>
+<h3 id="example-135-neighbours-across-the-y-seam">Example 13.5 · Neighbours across the y seam</h3>
+<p>The same happens with y: (179, 3) and (179, 220) are six steps apart (220, 221, 222, 0, 1, 2, 3).</p>
+<div class="example" id="ex-13-seam-y">
+
+<p><a href="../img/13-seam-y.webp"><img loading="lazy" decoding="async" alt="F₂₂₃ from the side with P₁ = (179, 3) just above the outer equator and P₂ = (179, 220) just below it, while the flat map puts them at its bottom and top edges" src="../img/13-seam-y.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoicGIyMjMiLCJhIjoiMCIsImIiOiI3IiwicCI6IjIyMyIsImciOiIoNDcsIDcxKSIsInAxIjoiKDE3OSwgMykiLCJwMiI6IigxNzksIDIyMCkiLCJvcCI6ImFkZCIsInNob3dHIjp0cnVlLCJmb3JjZSI6ZmFsc2UsInNoYXBlIjoidG9ydXMiLCJtYXAiOiJzY2FsZSIsImJpdHMiOjI0LCJzdSI6MjQsInN2IjoxNiwiUiI6MS4yLCJyIjowLjQ2LCJnbGFzcyI6MC41NSwiYmFjayI6MC40LCJzaG93Ijp7ImdyaWQiOnRydWUsInJpbmdzIjp0cnVlLCJsYWJlbHMiOnRydWUsImNsb3VkIjp0cnVlLCJjaG9yZCI6dHJ1ZSwiYmV0YSI6ZmFsc2UsIm1hcCI6dHJ1ZSwic3BpbiI6ZmFsc2V9LCJyaW5ncyI6eyJwMSI6dHJ1ZSwicDIiOnRydWUsInN1bSI6dHJ1ZSwiZyI6ZmFsc2V9LCJ0aGVtZSI6ImRhcmsiLCJwYW5lbCI6dHJ1ZSwibWluaUJpZyI6ZmFsc2UsImxlZ2VuZE1pbiI6ZmFsc2UsInNlY3MiOnsiY3VydmUiOnRydWUsInBvaW50cyI6dHJ1ZSwic2hhcGUiOnRydWUsInZpZXciOnRydWUsImluc3BlY3RvciI6dHJ1ZSwicmVsYXRpb25zIjp0cnVlLCJ0ZXN0IjpmYWxzZX19" target="_blank" rel="noopener">(179, 3) and (179, 220)</a></p>
+<p><strong>Do it yourself</strong></p>
+<ol>
+<li>In <strong>Curve</strong>, pick the preset <strong>y² = x³ + 7 over F₂₂₃, Programming Bitcoin</strong>.</li>
+<li>Type <code>(179, 3)</code> in <strong>P₁</strong> and <code>(179, 220)</code> in <strong>P₂</strong>.</li>
+<li>Press <strong>3</strong> for the side view.</li>
+<li>In the 3D view, click P₁ and P₂ to pin their cards.</li>
+<li>Read the <strong>Relations</strong> section in the panel.</li>
+</ol>
+</div>
+
+<p><strong>Look at:</strong> from the side, the two points sit just above and just below the outer edge of the donut, on one ring
+around the tube. On the flat map they are at the very bottom and the very top. Relations says Δv = 9.686°.</p>
+<p><strong>Why:</strong> y = 3 and y = 220 are close because y wraps at 223. They also share x = 179, so Relations reports “P₂ = −P₁”:
+they are mirror images. Every point with a small y has its mirror image just across the outer edge of the donut, and
+the next chapter is all about that.</p>
+<h2 id="try-it-yourself">Try it yourself</h2>
+<ul>
+<li>In Example 13.1, hover dots near the left edge of the flat map, then near the right edge, and compare their x.</li>
+<li>Turn <strong>Guide rings</strong> off and on in <strong>Display</strong>, and pick which points get rings under <strong>Guide rings for</strong>.</li>
+<li>Press <strong>S</strong> to switch to the cylinder: x still goes around, but y now runs up and down and the y seam becomes the
+  top and bottom edge. <a href="16-nine-shapes.html">16 One set of points, nine shapes</a> shows every shape.</li>
+</ul>
+<h2 id="recap">Recap</h2>
+<ul>
+<li>Both coordinates wrap at p, so the pairs (x, y) form a square whose opposite edges are glued: a torus.</li>
+<li>u = 360° × x / p goes around the hole, v = 360° × y / p around the tube; each point has a ring of each kind.</li>
+<li>The flat map is the same torus cut open at x = 0 and y = 0; points near those seams are neighbours.</li>
+</ul>
+<p>Next: <a href="14-how-far-apart.html">14 Two points: how far apart?</a>.</p>
+<nav class="pn" aria-label="Previous and next"><a class="prev" href="12-cloud-of-dots.html"><small>← previous</small>12 · A curve is a cloud of dots</a><a class="next" href="14-how-far-apart.html"><small>next →</small>14 · Two points: how far apart?</a></nav>
+<footer class="foot"><p>Tutorials for <i>Elliptic curve → torus</i> v3.2.2, the single-file visualizer by Idle (idlebg.com). Every example link opens the visualizer at the top of the repository.</p>
+<nav class="links" aria-label="Project links"><a class="pill" href="https://github.com/idlebg/EllipticTorus3d" target="_blank" rel="noopener" title="Source code, tests and releases (MIT)"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><path d="m5.5 4.5-3.5 3.5 3.5 3.5M10.5 4.5 14 8l-3.5 3.5M9.2 2.8 6.8 13.2"/></svg>Source on GitHub</a><a class="pill" href="https://idlebg.com/idleGevrek/" target="_blank" rel="noopener" title="Ready-made states with screenshots and a tour video"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1.2"/><rect x="9" y="2" width="5" height="5" rx="1.2"/><rect x="2" y="9" width="5" height="5" rx="1.2"/><rect x="9" y="9" width="5" height="5" rx="1.2"/></svg>Gallery and tour</a><a class="pill" href="https://idlebg.com/idleGevrek/tutorials/" target="_blank" rel="noopener" title="These tutorials on idlebg.com"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><path d="M8 4.5C6.6 3.4 4.6 3 2.5 3.2v9c2.1-.2 4.1.2 5.5 1.3 1.4-1.1 3.4-1.5 5.5-1.3v-9C11.4 3 9.4 3.4 8 4.5zM8 4.5v9"/></svg>Tutorials online</a></nav></footer>
+</main>
+</div>
+</body>
+</html>

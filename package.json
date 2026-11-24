@@ -1,6 +1,6 @@
 {
   "name": "ec-torus",
-  "version": "3.2.1",
+  "version": "3.2.2",
   "description": "Points of an elliptic curve over F_p on a torus and eight other shapes: single-file offline visualizer",
   "homepage": "https://idlebg.com/idleGevrek/",
   "repository": {

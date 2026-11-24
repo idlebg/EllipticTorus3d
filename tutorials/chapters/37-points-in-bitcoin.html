@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>37 Where points appear in Bitcoin · Elliptic curve → torus · tutorials</title>
+<meta name="description" content="37 Where points appear in Bitcoin: BIP340 signatures, the Taproot tweak, BIP32 child keys. Tutorials for Elliptic curve → torus, the single-file offline visualizer of elliptic curves over finite fields: how to use it and what it shows, with checked worked examples from first steps to Bitcoin keys and research.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23070b10'/%3E%3Cellipse cx='32' cy='33' rx='23' ry='14' fill='none' stroke='%232de2e6' stroke-width='5'/%3E%3Cpath d='M21 31c6 5 16 5 22 0M24 34c5-3 11-3 16 0' fill='none' stroke='%232de2e6' stroke-width='3.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root { color-scheme: light dark; --bg: #f6f4ee; --panel: #fffdf8; --panel-2: #efece3; --line: #ddd8cb; --text: #1d2530;
+  --muted: #5d6874; --accent: #08797d; --accent-2: #b35c00; --code: #ece8dd; --shadow: 0 1px 2px rgba(0,0,0,.06);
+  --font: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --mono: "Cascadia Mono", "Cascadia Code", Consolas, "SF Mono", Menlo, monospace; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #070b10; --panel: #0b1118; --panel-2: #0f1822; --line: #1c2a37; --text: #d5e1ea; --muted: #8b9cad;
+    --accent: #2de2e6; --accent-2: #ffb547; --code: #111c27; --shadow: none; } }
+* { box-sizing: border-box; }
+html { scroll-padding-top: 12px; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.62 var(--font); }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:hover { text-decoration-thickness: 2px; }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); min-height: 100vh; }
+.side { position: sticky; top: 0; height: 100vh; overflow: auto; padding: 20px 18px 40px; border-right: 1px solid var(--line);
+  background: var(--panel); font-size: 14px; line-height: 1.45; }
+.side .brand { display: block; font-weight: 650; font-size: 15px; color: var(--text); text-decoration: none; margin-bottom: 2px; }
+.side .brand b { color: var(--accent); font-weight: 500; }
+.side .sub { color: var(--muted); font-size: 12.5px; margin: 0 0 12px; }
+.side .links { margin: 0 0 6px; }
+.side h4 { margin: 18px 0 6px; font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.side ol { list-style: none; margin: 0; padding: 0; }
+.side li a { display: flex; gap: 8px; padding: 3px 8px; border-radius: 6px; color: var(--text); text-decoration: none; }
+.side li a span { color: var(--muted); min-width: 1.6em; font-variant-numeric: tabular-nums; }
+.side li a:hover { background: var(--panel-2); }
+.side li a[aria-current] { background: var(--panel-2); color: var(--accent); font-weight: 600; box-shadow: inset 2px 0 0 var(--accent); }
+.side li a:focus-visible { outline-offset: -2px; }
+.side .top a { font-weight: 600; }
+.side details summary { display: none; }
+svg.ic { fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.links { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px 4px 9px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--panel-2); background: color-mix(in srgb, var(--accent) 7%, var(--panel)); color: var(--text);
+  font-size: 12.5px; font-weight: 600; line-height: 1.35; text-decoration: none; white-space: nowrap;
+  transition: color .15s, border-color .15s, background-color .15s; }
+.pill .ic { width: 14px; height: 14px; flex: none; color: var(--accent); }
+.pill:hover { color: var(--accent); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--panel)); }
+.pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 999px; }
+main { padding: 28px clamp(18px, 4vw, 56px) 64px; max-width: 1020px; }
+main > .crumb { color: var(--muted); font-size: 13px; margin-bottom: 6px; }
+h1 { font-size: 30px; line-height: 1.2; margin: 4px 0 14px; letter-spacing: -.01em; }
+h2 { font-size: 22px; margin: 40px 0 10px; padding-top: 14px; border-top: 1px solid var(--line); }
+h3 { font-size: 18px; margin: 30px 0 8px; }
+h4 { font-size: 16px; margin: 22px 0 6px; }
+p, ul, ol, table, pre, blockquote { margin: 10px 0 14px; }
+li { margin: 3px 0; }
+code { font: 0.88em/1.4 var(--mono); background: var(--code); border-radius: 4px; padding: 1px 4px; overflow-wrap: anywhere; }
+pre { background: var(--code); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow: auto; }
+pre code { background: none; padding: 0; overflow-wrap: normal; }
+kbd { font: 12.5px var(--mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; display: block; overflow-x: auto; }
+th, td { border: 1px solid var(--line); padding: 6px 9px; text-align: left; vertical-align: top; }
+th { background: var(--panel-2); font-weight: 600; }
+td code { overflow-wrap: anywhere; }
+blockquote { border-left: 3px solid var(--accent); margin-left: 0; padding: 2px 14px; color: var(--muted); background: var(--panel); border-radius: 0 6px 6px 0; }
+img { max-width: 100%; height: auto; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 28px 0; }
+.example { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 12px 16px 6px; margin: 14px 0 18px; box-shadow: var(--shadow); }
+.example > p:first-child { margin-top: 2px; }
+.example img { display: block; border-radius: 8px; border: 1px solid var(--line); }
+.example .open a { display: inline-block; background: var(--accent); color: var(--bg); font-weight: 650; text-decoration: none; border-radius: 7px; padding: 5px 12px; }
+.example .open a:hover { filter: brightness(1.1); }
+.example .open a:focus-visible { outline-offset: 3px; }
+.example ol { font-size: 15px; }
+.example table { font-size: 14px; }
+.pn { display: flex; justify-content: space-between; gap: 14px; margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); }
+.pn a { display: block; max-width: 48%; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; text-decoration: none; background: var(--panel); }
+.pn a small { display: block; color: var(--muted); font-size: 12px; }
+.pn a.next { margin-left: auto; text-align: right; }
+.pn a:focus-visible { border-radius: 10px; }
+footer.foot { color: var(--muted); font-size: 12.5px; margin-top: 30px; padding-top: 14px; border-top: 1px solid var(--line); }
+footer.foot p { margin: 0 0 10px; }
+.toc-inline { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 16px; font-size: 14.5px; }
+/* all-examples page: filters by level without script (radio buttons + sibling selectors) */
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 18px; }
+.filters input { position: absolute; opacity: 0; pointer-events: none; }
+.filters label { border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; cursor: pointer; font-size: 14px; background: var(--panel); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.card { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); overflow: hidden; display: flex; flex-direction: column; }
+.card img { display: block; width: 100%; aspect-ratio: 1068 / 900; object-fit: cover; border-bottom: 1px solid var(--line); }
+.card .b { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.card h3 { margin: 0; font-size: 15px; }
+.card .meta { color: var(--muted); font-size: 12.5px; }
+.card .acts { margin-top: auto; display: flex; gap: 12px; font-size: 14px; }
+#f-all:checked ~ .filters label[for="f-all"], #f-1:checked ~ .filters label[for="f-1"], #f-2:checked ~ .filters label[for="f-2"],
+#f-3:checked ~ .filters label[for="f-3"], #f-4:checked ~ .filters label[for="f-4"], #f-9:checked ~ .filters label[for="f-9"] {
+  background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
+#f-all:focus-visible ~ .filters label[for="f-all"], #f-1:focus-visible ~ .filters label[for="f-1"], #f-2:focus-visible ~ .filters label[for="f-2"],
+#f-3:focus-visible ~ .filters label[for="f-3"], #f-4:focus-visible ~ .filters label[for="f-4"], #f-9:focus-visible ~ .filters label[for="f-9"] {
+  outline: 2px solid var(--accent); outline-offset: 2px; }
+#f-1:checked ~ .grid .card:not(.l1), #f-2:checked ~ .grid .card:not(.l2), #f-3:checked ~ .grid .card:not(.l3),
+#f-4:checked ~ .grid .card:not(.l4), #f-9:checked ~ .grid .card:not(.l9) { display: none; }
+.radios { position: absolute; opacity: 0; pointer-events: none; }
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .side { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+  .side details summary { display: block; cursor: pointer; color: var(--accent); font-weight: 600; margin: 6px 0; }
+  .side details:not([open]) > ol, .side details:not([open]) > h4 { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .pill { transition: none; } }
+@media print { .side, .pn, .foot .links { display: none; } .layout { display: block; } main { max-width: none; } }
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="side" aria-label="Contents">
+<a class="brand" href="../index.html">Elliptic curve <b>→</b> torus</a>
+<p class="sub">Tutorials for the visualizer v3.2.2. Offline; nothing is loaded from the network.</p>
+<div class="links"><a class="pill" href="https://github.com/idlebg/EllipticTorus3d" target="_blank" rel="noopener" title="Source code, tests and releases (MIT)"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><path d="m5.5 4.5-3.5 3.5 3.5 3.5M10.5 4.5 14 8l-3.5 3.5M9.2 2.8 6.8 13.2"/></svg>Source on GitHub</a><a class="pill" href="https://idlebg.com/idleGevrek/" target="_blank" rel="noopener" title="Ready-made states with screenshots and a tour video"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1.2"/><rect x="9" y="2" width="5" height="5" rx="1.2"/><rect x="2" y="9" width="5" height="5" rx="1.2"/><rect x="9" y="9" width="5" height="5" rx="1.2"/></svg>Gallery and tour</a><a class="pill" href="https://idlebg.com/idleGevrek/tutorials/" target="_blank" rel="noopener" title="These tutorials on idlebg.com"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><path d="M8 4.5C6.6 3.4 4.6 3 2.5 3.2v9c2.1-.2 4.1.2 5.5 1.3 1.4-1.1 3.4-1.5 5.5-1.3v-9C11.4 3 9.4 3.4 8 4.5zM8 4.5v9"/></svg>Tutorials online</a></div>
+<details open><summary>Contents</summary>
+<ol class="top"><li><a href="../index.html"><span>·</span>Start page</a></li><li><a href="../examples.html"><span>·</span>All examples</a></li></ol>
+<h4>Level 1 · Explorer</h4><ol>
+<li><a href="11-start-here.html"><span>11</span>Start here</a></li>
+<li><a href="12-cloud-of-dots.html"><span>12</span>A curve is a cloud of dots</a></li>
+<li><a href="13-why-a-donut.html"><span>13</span>Why a donut</a></li>
+<li><a href="14-how-far-apart.html"><span>14</span>Two points: how far apart?</a></li>
+<li><a href="15-mirror-images.html"><span>15</span>Mirror images: 02 and 03</a></li>
+<li><a href="16-nine-shapes.html"><span>16</span>One set of points, nine shapes</a></li>
+<li><a href="17-save-share-export.html"><span>17</span>Save, share, export</a></li>
+<li><a href="18-make-it-look-right.html"><span>18</span>Make it look right</a></li>
+</ol>
+<h4>Level 2 · Learner</h4><ol>
+<li><a href="21-clock-arithmetic.html"><span>21</span>Clock arithmetic and the curve equation</a></li>
+<li><a href="22-counting-points.html"><span>22</span>Counting points</a></li>
+<li><a href="23-negation.html"><span>23</span>Negation</a></li>
+<li><a href="24-chord.html"><span>24</span>Adding points: the chord</a></li>
+<li><a href="25-tangent.html"><span>25</span>Doubling: the tangent</a></li>
+<li><a href="26-subtraction.html"><span>26</span>Subtraction</a></li>
+<li><a href="27-walking-multiples.html"><span>27</span>Walking the multiples</a></li>
+<li><a href="28-orders-subgroups.html"><span>28</span>Orders and subgroups</a></li>
+<li><a href="29-discrete-logs.html"><span>29</span>Discrete logs on toy curves</a></li>
+</ol>
+<h4>Level 3 · Bitcoiner</h4><ol>
+<li><a href="31-secp256k1.html"><span>31</span>secp256k1 in the panel</a></li>
+<li><a href="32-private-to-public.html"><span>32</span>Private key → public key</a></li>
+<li><a href="33-key-formats.html"><span>33</span>Key formats</a></li>
+<li><a href="34-parity-taproot.html"><span>34</span>Parity, 02/03 and Taproot</a></li>
+<li><a href="35-glv.html"><span>35</span>The GLV endomorphism</a></li>
+<li><a href="36-invalid-points.html"><span>36</span>Invalid points</a></li>
+<li><a href="37-points-in-bitcoin.html" aria-current="page"><span>37</span>Where points appear in Bitcoin</a></li>
+<li><a href="39-p256.html"><span>39</span>P-256 next to secp256k1</a></li>
+</ol>
+<h4>Level 4 · Researcher</h4><ol>
+<li><a href="41-mapping.html"><span>41</span>The mapping</a></li>
+<li><a href="42-group-structure.html"><span>42</span>Group structure</a></li>
+<li><a href="43-j-zero.html"><span>43</span>j = 0 and its automorphisms</a></li>
+<li><a href="44-twists.html"><span>44</span>Quadratic twists</a></li>
+<li><a href="45-invalid-curve-attacks.html"><span>45</span>Invalid-curve attacks</a></li>
+<li><a href="46-singular-composite.html"><span>46</span>Singular curves and composite moduli</a></li>
+<li><a href="47-shapes-topology.html"><span>47</span>Shapes as topology</a></li>
+<li><a href="48-scripting.html"><span>48</span>Scripting with ecTorus</a></li>
+<li><a href="49-trusting-numbers.html"><span>49</span>Trusting the numbers</a></li>
+</ol>
+<h4>Reference</h4><ol>
+<li><a href="91-cookbook.html"><span>91</span>Cookbook</a></li>
+<li><a href="92-exercises.html"><span>92</span>Exercises</a></li>
+<li><a href="93-answers.html"><span>93</span>Answers to the exercises</a></li>
+<li><a href="94-glossary.html"><span>94</span>Glossary</a></li>
+<li><a href="95-faq.html"><span>95</span>FAQ and troubleshooting</a></li>
+<li><a href="96-for-teachers.html"><span>96</span>For teachers</a></li>
+</ol>
+</details>
+</nav>
+<main>
+<div class="crumb">Level 3 · Bitcoiner · chapter 37</div>
+<h1 id="37-where-points-appear-in-bitcoin">37 Where points appear in Bitcoin</h1>
+<p><strong>Level 3 · Bitcoiner.</strong> Three places where Bitcoin adds points, each redone in the visualizer with the official test
+vectors: a BIP340 signature check, the BIP341 Taproot tweak, and BIP32 child keys, including why an xpub plus one
+child private key gives away the parent key. Read first: <a href="32-private-to-public.html">32 Private key → public key</a> and
+<a href="34-parity-taproot.html">34 Parity, 02/03 and Taproot</a>.</p>
+<p>All values below are from the BIP test vectors as the idleCore library carries them, recomputed by idleCore (the
+signature is re-signed, the tweak re-hashed, the BIP32 keys re-derived and compared with the vectors’ xpub and xprv
+strings). The private keys in them are published test data: never use them for funds.</p>
+<h2 id="bip340-a-signature-contains-a-point">BIP340: a signature contains a point</h2>
+<p>A BIP340 signature is 64 bytes, (r, s). r is the x coordinate of the signer’s nonce point R = k·G, written x-only, and
+s = k + e·d (mod n), where d is the private key and e a hash of (r, P, message). A verifier checks</p>
+<p>s·G = R + e·P.</p>
+<p>Test vector 0 signs the all-zero message with d = 3, so P = 3G, x-only <code>f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9</code>. Its signature is
+<code>e907831f80848d1069a5371b402410364bdf1c5f8307b0084c55f1ce2dca821525f66a4a85ea8b71e482a74f382d2ce5ebeee8fdb2172f477df4900d310536c0</code>:
+r = <code>e907831f80848d1069a5371b402410364bdf1c5f8307b0084c55f1ce2dca8215</code>, s = <code>25f66a4a85ea8b71e482a74f382d2ce5ebeee8fdb2172f477df4900d310536c0</code>.</p>
+<h3 id="example-371-a-bip340-signatures-r-is-a-point">Example 37.1 · A BIP340 signature’s r is a point</h3>
+<div class="example" id="ex-37-bip340-r">
+
+<p><a href="../img/37-bip340-r.webp"><img loading="lazy" decoding="async" alt="secp256k1 with P₁ = the r of BIP340 test vector 0, read as an x-only key: the nonce point R; P₂ = the vector’s public key, 3G" src="../img/37-bip340-r.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoiazEtbmVnIiwiYSI6IjAiLCJiIjoiNyIsInAiOiIyXjI1NiAtIDJeMzIgLSA5NzciLCJnIjoiMDI3OWJlNjY3ZWY5ZGNiYmFjNTVhMDYyOTVjZTg3MGIwNzAyOWJmY2RiMmRjZTI4ZDk1OWYyODE1YjE2ZjgxNzk4IiwicDEiOiJlOTA3ODMxZjgwODQ4ZDEwNjlhNTM3MWI0MDI0MTAzNjRiZGYxYzVmODMwN2IwMDg0YzU1ZjFjZTJkY2E4MjE1IiwicDIiOiJmOTMwOGEwMTkyNThjMzEwNDkzNDRmODVmODlkNTIyOWI1MzFjODQ1ODM2Zjk5YjA4NjAxZjExM2JjZTAzNmY5Iiwib3AiOiJhZGQiLCJzaG93RyI6dHJ1ZSwiZm9yY2UiOmZhbHNlLCJzaGFwZSI6InRvcnVzIiwibWFwIjoic2NhbGUiLCJiaXRzIjoyNCwic3UiOjI0LCJzdiI6MTYsIlIiOjEuMiwiciI6MC40NiwiZ2xhc3MiOjAuNTUsImJhY2siOjAuNCwic2hvdyI6eyJncmlkIjp0cnVlLCJyaW5ncyI6dHJ1ZSwibGFiZWxzIjp0cnVlLCJjbG91ZCI6dHJ1ZSwiY2hvcmQiOnRydWUsImJldGEiOmZhbHNlLCJtYXAiOnRydWUsInNwaW4iOmZhbHNlfSwicmluZ3MiOnsicDEiOnRydWUsInAyIjp0cnVlLCJzdW0iOnRydWUsImciOmZhbHNlfSwidGhlbWUiOiJkYXJrIiwicGFuZWwiOnRydWUsIm1pbmlCaWciOmZhbHNlLCJsZWdlbmRNaW4iOmZhbHNlLCJzZWNzIjp7ImN1cnZlIjp0cnVlLCJwb2ludHMiOnRydWUsInNoYXBlIjp0cnVlLCJ2aWV3Ijp0cnVlLCJpbnNwZWN0b3IiOnRydWUsInJlbGF0aW9ucyI6dHJ1ZSwidGVzdCI6ZmFsc2V9fQ" target="_blank" rel="noopener">R and P of BIP340 vector 0</a></p>
+<p><strong>Do it yourself</strong></p>
+<ol>
+<li>In <strong>Curve</strong>, pick the preset <strong>secp256k1: G and −G (mirror pair)</strong>.</li>
+<li>Type <code>e907831f80848d1069a5371b402410364bdf1c5f8307b0084c55f1ce2dca8215</code> in <strong>P₁</strong> and <code>f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9</code> in <strong>P₂</strong>.</li>
+<li>In the 3D view, click P₁ and P₂ to pin their cards.</li>
+<li>Read the <strong>Points</strong> section in the panel.</li>
+</ol>
+</div>
+
+<p><strong>Look at:</strong> both inputs are read as “x-only (BIP340, even y), on the curve”: P₁ is the nonce point R, P₂ the public
+key P = 3G.</p>
+<p><strong>Why:</strong> BIP340 makes the signer pick a nonce whose point has an even y, so r alone names R, exactly as an x-only key
+names its point.</p>
+<h3 id="example-372-verifying-bip340-r-ep-sg">Example 37.2 · Verifying BIP340: R + e·P = s·G</h3>
+<p>The challenge for this vector is e = <code>6bb6b93a91f2ecc0cd924f4f9baabb5e6eb21745bb00f2cebdaac908bb5d86ce</code>. Since P = 3G, e·P = (3e mod n)·G, and 3e mod n =
+<code>43242bafb5d8c64268b6edeed300321c916768ea81ba3830792dfc8d61e25329</code>, so P₂ is typed as that number followed by <code>G</code>.</p>
+<div class="example" id="ex-37-bip340-verify">
+
+<p><a href="../img/37-bip340-verify.webp"><img loading="lazy" decoding="async" alt="secp256k1 with P₁ = R and P₂ = e·P typed as (3e mod n)G: their sum is s·G, the check a verifier makes" src="../img/37-bip340-verify.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoiazEtbmVnIiwiYSI6IjAiLCJiIjoiNyIsInAiOiIyXjI1NiAtIDJeMzIgLSA5NzciLCJnIjoiMDI3OWJlNjY3ZWY5ZGNiYmFjNTVhMDYyOTVjZTg3MGIwNzAyOWJmY2RiMmRjZTI4ZDk1OWYyODE1YjE2ZjgxNzk4IiwicDEiOiJlOTA3ODMxZjgwODQ4ZDEwNjlhNTM3MWI0MDI0MTAzNjRiZGYxYzVmODMwN2IwMDg0YzU1ZjFjZTJkY2E4MjE1IiwicDIiOiIweDQzMjQyYmFmYjVkOGM2NDI2OGI2ZWRlZWQzMDAzMjFjOTE2NzY4ZWE4MWJhMzgzMDc5MmRmYzhkNjFlMjUzMjlHIiwib3AiOiJhZGQiLCJzaG93RyI6dHJ1ZSwiZm9yY2UiOmZhbHNlLCJzaGFwZSI6InRvcnVzIiwibWFwIjoic2NhbGUiLCJiaXRzIjoyNCwic3UiOjI0LCJzdiI6MTYsIlIiOjEuMiwiciI6MC40NiwiZ2xhc3MiOjAuNTUsImJhY2siOjAuNCwic2hvdyI6eyJncmlkIjp0cnVlLCJyaW5ncyI6dHJ1ZSwibGFiZWxzIjp0cnVlLCJjbG91ZCI6dHJ1ZSwiY2hvcmQiOnRydWUsImJldGEiOmZhbHNlLCJtYXAiOnRydWUsInNwaW4iOmZhbHNlfSwicmluZ3MiOnsicDEiOnRydWUsInAyIjp0cnVlLCJzdW0iOnRydWUsImciOmZhbHNlfSwidGhlbWUiOiJkYXJrIiwicGFuZWwiOnRydWUsIm1pbmlCaWciOmZhbHNlLCJsZWdlbmRNaW4iOmZhbHNlLCJzZWNzIjp7ImN1cnZlIjp0cnVlLCJwb2ludHMiOnRydWUsInNoYXBlIjp0cnVlLCJ2aWV3Ijp0cnVlLCJpbnNwZWN0b3IiOnRydWUsInJlbGF0aW9ucyI6dHJ1ZSwidGVzdCI6ZmFsc2V9fQ" target="_blank" rel="noopener">R + e·P for BIP340 vector 0</a></p>
+<p><strong>Do it yourself</strong></p>
+<ol>
+<li>In <strong>Curve</strong>, pick the preset <strong>secp256k1: G and −G (mirror pair)</strong>.</li>
+<li>Type <code>e907831f80848d1069a5371b402410364bdf1c5f8307b0084c55f1ce2dca8215</code> in <strong>P₁</strong> and <code>0x43242bafb5d8c64268b6edeed300321c916768ea81ba3830792dfc8d61e25329G</code> in <strong>P₂</strong>.</li>
+<li>In the 3D view, click the result to pin its card.</li>
+<li>Read the <strong>Relations</strong> section in the panel.</li>
+</ol>
+</div>
+
+<p><strong>Look at:</strong> Relations gives P₁ + P₂ = <code>03d4219d5bcf3d579f4947beb31afd48fc5db75f0134f5a095f3465dbc46f41ebd</code>, which is s·G: type <code>0x</code> + s + <code>G</code> into another field and compare.</p>
+<p><strong>Why:</strong> that equality is the whole of BIP340 verification. (Typing e·P as a multiple of G uses the private key 3,
+which only a test vector reveals; a verifier computes e·P from P directly.)</p>
+<h2 id="bip341-the-taproot-tweak">BIP341: the Taproot tweak</h2>
+<p>A Taproot output key is Q = P + t·G, where P is the internal key (x-only, even y) and t = H_TapTweak(P ‖ merkle root),
+a tagged hash. For the key-path-only vector 0, the internal key is <code>d6889cb081036e0faefa3a35157ad71086b123b2b144b649798b494c300a961d</code>, the tweak
+t = <code>b86e7be8f39bab32a6f2c0443abbc210f0edac0e2c53d501b36b64437d9c6c70</code>, and the output key x(Q) = <code>53a1f6e454df1aa2776a2814a721372d6258050de330b3c6d10ee8f4e0dda343</code>.</p>
+<h3 id="example-373-the-taproot-tweak-q-p-tg">Example 37.3 · The Taproot tweak: Q = P + t·G</h3>
+<div class="example" id="ex-37-taproot">
+
+<p><a href="../img/37-taproot.webp"><img loading="lazy" decoding="async" alt="secp256k1 with P₁ = the internal key of BIP341 vector 0 (x-only) and P₂ = t·G: their sum is the output key Q, with an odd y" src="../img/37-taproot.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoiazEtbmVnIiwiYSI6IjAiLCJiIjoiNyIsInAiOiIyXjI1NiAtIDJeMzIgLSA5NzciLCJnIjoiMDI3OWJlNjY3ZWY5ZGNiYmFjNTVhMDYyOTVjZTg3MGIwNzAyOWJmY2RiMmRjZTI4ZDk1OWYyODE1YjE2ZjgxNzk4IiwicDEiOiJkNjg4OWNiMDgxMDM2ZTBmYWVmYTNhMzUxNTdhZDcxMDg2YjEyM2IyYjE0NGI2NDk3OThiNDk0YzMwMGE5NjFkIiwicDIiOiIweGI4NmU3YmU4ZjM5YmFiMzJhNmYyYzA0NDNhYmJjMjEwZjBlZGFjMGUyYzUzZDUwMWIzNmI2NDQzN2Q5YzZjNzBHIiwib3AiOiJhZGQiLCJzaG93RyI6dHJ1ZSwiZm9yY2UiOmZhbHNlLCJzaGFwZSI6InRvcnVzIiwibWFwIjoic2NhbGUiLCJiaXRzIjoyNCwic3UiOjI0LCJzdiI6MTYsIlIiOjEuMiwiciI6MC40NiwiZ2xhc3MiOjAuNTUsImJhY2siOjAuNCwic2hvdyI6eyJncmlkIjp0cnVlLCJyaW5ncyI6dHJ1ZSwibGFiZWxzIjp0cnVlLCJjbG91ZCI6dHJ1ZSwiY2hvcmQiOnRydWUsImJldGEiOmZhbHNlLCJtYXAiOnRydWUsInNwaW4iOmZhbHNlfSwicmluZ3MiOnsicDEiOnRydWUsInAyIjp0cnVlLCJzdW0iOnRydWUsImciOmZhbHNlfSwidGhlbWUiOiJkYXJrIiwicGFuZWwiOnRydWUsIm1pbmlCaWciOmZhbHNlLCJsZWdlbmRNaW4iOmZhbHNlLCJzZWNzIjp7ImN1cnZlIjp0cnVlLCJwb2ludHMiOnRydWUsInNoYXBlIjp0cnVlLCJ2aWV3Ijp0cnVlLCJpbnNwZWN0b3IiOnRydWUsInJlbGF0aW9ucyI6dHJ1ZSwidGVzdCI6ZmFsc2V9fQ" target="_blank" rel="noopener">BIP341 vector 0: P + tG</a></p>
+<p><strong>Do it yourself</strong></p>
+<ol>
+<li>In <strong>Curve</strong>, pick the preset <strong>secp256k1: G and −G (mirror pair)</strong>.</li>
+<li>Type <code>d6889cb081036e0faefa3a35157ad71086b123b2b144b649798b494c300a961d</code> in <strong>P₁</strong> and <code>0xb86e7be8f39bab32a6f2c0443abbc210f0edac0e2c53d501b36b64437d9c6c70G</code> in <strong>P₂</strong>.</li>
+<li>In the 3D view, click the result to pin its card.</li>
+<li>Read the <strong>Relations</strong> section in the panel.</li>
+</ol>
+</div>
+
+<p><strong>Look at:</strong> the sum in Relations, <code>0353a1f6e454df1aa2776a2814a721372d6258050de330b3c6d10ee8f4e0dda343</code>: its x is the vector’s output key, and its prefix <code>03</code> says Q has an
+odd y.</p>
+<p><strong>Why:</strong> the output key goes on chain x-only, so the odd y is dropped there. It matters in two places: a key-path
+signer must negate the tweaked private key so it matches the even-y point, and a script-path spend carries the parity
+bit in its control block.</p>
+<h2 id="bip32-child-keys-are-sums">BIP32: child keys are sums</h2>
+<p>For a non-hardened child, BIP32 computes I = HMAC-SHA512(chain code, K_parent ‖ index) and takes its left half I_L.
+Then k_child = k_parent + I_L (mod n) and K_child = K_parent + I_L·G. Test vector 1 (seed <code>000102030405060708090a0b0c0d0e0f</code>), from m/0′ to
+m/0′/1:</p>
+<ul>
+<li>K_parent (m/0′) = <code>035a784662a4a20a65bf6aab9ae98a6c068a81c52e4b032c0fb5400c706cfccc56</code>, from xpub <code>xpub68Gmy5EdvgibQVfPdqkBBCHxA5htiqg55crXYuXoQRKfDBFA1WEjWgP6LHhwBZeNK1VTsfTFUHCdrfp1bgwQ9xv5ski8PX9rL2dZXvgGDnw</code>;</li>
+<li>I_L = <code>4eb9d78157bae7a24115001621c4d91e3a3110e11e143c5259eaa4e55c5ec4bf</code>;</li>
+<li>K_child (m/0′/1) = <code>03501e454bf00751f24b1b489aa925215d66af2234e3891c3b21a52bedb3cd711c</code>, xpub <code>xpub6ASuArnXKPbfEwhqN6e3mwBcDTgzisQN1wXN9BJcM47sSikHjJf3UFHKkNAWbWMiGj7Wf5uMash7SyYq527Hqck2AxYysAA7xmALppuCkwQ</code>.</li>
+</ul>
+<h3 id="example-374-bip32-k_child-k_parent-i_lg">Example 37.4 · BIP32: K_child = K_parent + I_L·G</h3>
+<div class="example" id="ex-37-bip32">
+
+<p><a href="../img/37-bip32.webp"><img loading="lazy" decoding="async" alt="secp256k1 with P₁ = the public key of m/0′ in BIP32 test vector 1 and P₂ = I_L·G: their sum is the public key of m/0′/1" src="../img/37-bip32.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoiazEtbmVnIiwiYSI6IjAiLCJiIjoiNyIsInAiOiIyXjI1NiAtIDJeMzIgLSA5NzciLCJnIjoiMDI3OWJlNjY3ZWY5ZGNiYmFjNTVhMDYyOTVjZTg3MGIwNzAyOWJmY2RiMmRjZTI4ZDk1OWYyODE1YjE2ZjgxNzk4IiwicDEiOiIwMzVhNzg0NjYyYTRhMjBhNjViZjZhYWI5YWU5OGE2YzA2OGE4MWM1MmU0YjAzMmMwZmI1NDAwYzcwNmNmY2NjNTYiLCJwMiI6IjB4NGViOWQ3ODE1N2JhZTdhMjQxMTUwMDE2MjFjNGQ5MWUzYTMxMTBlMTFlMTQzYzUyNTllYWE0ZTU1YzVlYzRiZkciLCJvcCI6ImFkZCIsInNob3dHIjp0cnVlLCJmb3JjZSI6ZmFsc2UsInNoYXBlIjoidG9ydXMiLCJtYXAiOiJzY2FsZSIsImJpdHMiOjI0LCJzdSI6MjQsInN2IjoxNiwiUiI6MS4yLCJyIjowLjQ2LCJnbGFzcyI6MC41NSwiYmFjayI6MC40LCJzaG93Ijp7ImdyaWQiOnRydWUsInJpbmdzIjp0cnVlLCJsYWJlbHMiOnRydWUsImNsb3VkIjp0cnVlLCJjaG9yZCI6dHJ1ZSwiYmV0YSI6ZmFsc2UsIm1hcCI6dHJ1ZSwic3BpbiI6ZmFsc2V9LCJyaW5ncyI6eyJwMSI6dHJ1ZSwicDIiOnRydWUsInN1bSI6dHJ1ZSwiZyI6ZmFsc2V9LCJ0aGVtZSI6ImRhcmsiLCJwYW5lbCI6dHJ1ZSwibWluaUJpZyI6ZmFsc2UsImxlZ2VuZE1pbiI6ZmFsc2UsInNlY3MiOnsiY3VydmUiOnRydWUsInBvaW50cyI6dHJ1ZSwic2hhcGUiOnRydWUsInZpZXciOnRydWUsImluc3BlY3RvciI6dHJ1ZSwicmVsYXRpb25zIjp0cnVlLCJ0ZXN0IjpmYWxzZX19" target="_blank" rel="noopener">BIP32 vector 1: m/0′ → m/0′/1</a></p>
+<p><strong>Do it yourself</strong></p>
+<ol>
+<li>In <strong>Curve</strong>, pick the preset <strong>secp256k1: G and −G (mirror pair)</strong>.</li>
+<li>Type <code>035a784662a4a20a65bf6aab9ae98a6c068a81c52e4b032c0fb5400c706cfccc56</code> in <strong>P₁</strong> and <code>0x4eb9d78157bae7a24115001621c4d91e3a3110e11e143c5259eaa4e55c5ec4bfG</code> in <strong>P₂</strong>.</li>
+<li>In the 3D view, click the result to pin its card.</li>
+<li>Read the <strong>Relations</strong> section in the panel.</li>
+</ol>
+</div>
+
+<p><strong>Look at:</strong> P₁ + P₂ in Relations is the child public key above.</p>
+<p><strong>Why:</strong> that is how a watch-only wallet derives receive addresses from an xpub: it needs the chain code (in the xpub)
+and the parent public key, never a private key.</p>
+<h3 id="example-375-xpub-one-child-key-the-parent-key">Example 37.5 · xpub + one child key = the parent key</h3>
+<p>The child’s private key is k_child = <code>3c6cb8d0f6a264c91ea8b5030fadaa8e538b020f0a387421a12de9319dc93368</code>. Subtract I_L·G from k_child·G:</p>
+<div class="example" id="ex-37-bip32-leak">
+
+<p><a href="../img/37-bip32-leak.webp"><img loading="lazy" decoding="async" alt="secp256k1 with P₁ = the child private key of m/0′/1 as kG and P₂ = I_L·G, subtracted: the result is the parent public key, and its card carries the parent private key" src="../img/37-bip32-leak.webp"></a></p>
+<p class="open"><strong>Open this view:</strong> <a href="../../elliptic_curve_torus_visualizer_v3.html#s=eyJ2IjozLCJwcmVzZXQiOiJjdXN0b20iLCJiYXNlUHJlc2V0IjoiazEtbmVnIiwiYSI6IjAiLCJiIjoiNyIsInAiOiIyXjI1NiAtIDJeMzIgLSA5NzciLCJnIjoiMDI3OWJlNjY3ZWY5ZGNiYmFjNTVhMDYyOTVjZTg3MGIwNzAyOWJmY2RiMmRjZTI4ZDk1OWYyODE1YjE2ZjgxNzk4IiwicDEiOiIweDNjNmNiOGQwZjZhMjY0YzkxZWE4YjUwMzBmYWRhYThlNTM4YjAyMGYwYTM4NzQyMWExMmRlOTMxOWRjOTMzNjhHIiwicDIiOiIweDRlYjlkNzgxNTdiYWU3YTI0MTE1MDAxNjIxYzRkOTFlM2EzMTEwZTExZTE0M2M1MjU5ZWFhNGU1NWM1ZWM0YmZHIiwib3AiOiJzdWIiLCJzaG93RyI6dHJ1ZSwiZm9yY2UiOmZhbHNlLCJzaGFwZSI6InRvcnVzIiwibWFwIjoic2NhbGUiLCJiaXRzIjoyNCwic3UiOjI0LCJzdiI6MTYsIlIiOjEuMiwiciI6MC40NiwiZ2xhc3MiOjAuNTUsImJhY2siOjAuNCwic2hvdyI6eyJncmlkIjp0cnVlLCJyaW5ncyI6dHJ1ZSwibGFiZWxzIjp0cnVlLCJjbG91ZCI6dHJ1ZSwiY2hvcmQiOnRydWUsImJldGEiOmZhbHNlLCJtYXAiOnRydWUsInNwaW4iOmZhbHNlfSwicmluZ3MiOnsicDEiOnRydWUsInAyIjp0cnVlLCJzdW0iOnRydWUsImciOmZhbHNlfSwidGhlbWUiOiJkYXJrIiwicGFuZWwiOnRydWUsIm1pbmlCaWciOmZhbHNlLCJsZWdlbmRNaW4iOmZhbHNlLCJzZWNzIjp7ImN1cnZlIjp0cnVlLCJwb2ludHMiOnRydWUsInNoYXBlIjp0cnVlLCJ2aWV3Ijp0cnVlLCJpbnNwZWN0b3IiOnRydWUsInJlbGF0aW9ucyI6dHJ1ZSwidGVzdCI6ZmFsc2V9fQ" target="_blank" rel="noopener">k_child − I_L for BIP32 vector 1</a></p>
+<p><strong>Do it yourself</strong></p>
+<ol>
+<li>In <strong>Curve</strong>, pick the preset <strong>secp256k1: G and −G (mirror pair)</strong>.</li>
+<li>Type <code>0x3c6cb8d0f6a264c91ea8b5030fadaa8e538b020f0a387421a12de9319dc93368G</code> in <strong>P₁</strong> and <code>0x4eb9d78157bae7a24115001621c4d91e3a3110e11e143c5259eaa4e55c5ec4bfG</code> in <strong>P₂</strong>.</li>
+<li>Choose the operation <strong>P₁ − P₂</strong>.</li>
+<li>In the 3D view, click the result to pin its card.</li>
+<li>Read the <strong>Relations</strong> section in the panel.</li>
+</ol>
+</div>
+
+<p><strong>Look at:</strong> <strong>P₁ − P₂</strong> is the parent public key, and the result’s card carries k = k_child − I_L, the parent private
+key <code>edb2e14f9ee77d26dd93b4ecede8d16ed408ce149b6cd80b0715a2d911a0afea</code>.</p>
+<p><strong>Why:</strong> I_L is computable from the xpub alone, so anyone with the xpub and one non-hardened child private key gets the
+parent private key by one subtraction, and with it every sibling key. That is why hardened derivation exists, and why
+an xpub must be treated as private when any child key could leak.</p>
+<h2 id="try-it-yourself">Try it yourself</h2>
+<ul>
+<li>In Example 37.2, put s·G into P₂ (<code>0x</code> + s + <code>G</code>) and choose <strong>P₁ − P₂</strong>: the result is −e·P.</li>
+<li>In Example 37.3, choose <strong>P₁ − P₂</strong>: you get P − tG. Which prefix does it have?</li>
+<li>In Example 37.4, press <strong>N</strong> with P₂ unchanged: the result is K_parent + 2·I_L·G, which is not a BIP32 key.</li>
+</ul>
+<h2 id="recap">Recap</h2>
+<ul>
+<li>BIP340: r is the x of a point R; verification is the point equation s·G = R + e·P.</li>
+<li>BIP341: the output key is the point sum Q = P + tG; its parity matters for signing and the control block.</li>
+<li>BIP32: K_child = K_parent + I_L·G, so an xpub plus one non-hardened child private key reveals the parent key.</li>
+</ul>
+<p>Next: <a href="39-p256.html">39 P-256 next to secp256k1</a>.</p>
+<nav class="pn" aria-label="Previous and next"><a class="prev" href="36-invalid-points.html"><small>← previous</small>36 · Invalid points</a><a class="next" href="39-p256.html"><small>next →</small>39 · P-256 next to secp256k1</a></nav>
+<footer class="foot"><p>Tutorials for <i>Elliptic curve → torus</i> v3.2.2, the single-file visualizer by Idle (idlebg.com). Every example link opens the visualizer at the top of the repository.</p>
+<nav class="links" aria-label="Project links"><a class="pill" href="https://github.com/idlebg/EllipticTorus3d" target="_blank" rel="noopener" title="Source code, tests and releases (MIT)"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><path d="m5.5 4.5-3.5 3.5 3.5 3.5M10.5 4.5 14 8l-3.5 3.5M9.2 2.8 6.8 13.2"/></svg>Source on GitHub</a><a class="pill" href="https://idlebg.com/idleGevrek/" target="_blank" rel="noopener" title="Ready-made states with screenshots and a tour video"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1.2"/><rect x="9" y="2" width="5" height="5" rx="1.2"/><rect x="2" y="9" width="5" height="5" rx="1.2"/><rect x="9" y="9" width="5" height="5" rx="1.2"/></svg>Gallery and tour</a><a class="pill" href="https://idlebg.com/idleGevrek/tutorials/" target="_blank" rel="noopener" title="These tutorials on idlebg.com"><svg viewBox="0 0 16 16" class="ic" aria-hidden="true"><path d="M8 4.5C6.6 3.4 4.6 3 2.5 3.2v9c2.1-.2 4.1.2 5.5 1.3 1.4-1.1 3.4-1.5 5.5-1.3v-9C11.4 3 9.4 3.4 8 4.5zM8 4.5v9"/></svg>Tutorials online</a></nav></footer>
+</main>
+</div>
+</body>
+</html>

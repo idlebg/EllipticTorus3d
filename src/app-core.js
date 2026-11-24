@@ -286,7 +286,7 @@ function computeModel(s) {
       const g = curve.eq(r.P, m.G) ? `<span class="good">${r.label} = G</span>` : curve.eq(r.P, curve.neg(m.G)) ? `${r.label} = −G, the mirror of G` : 'neither G nor −G';
       m.rel.push([`${r.label} vs G`, g]);
     }
-    const ptStr = (P) => (P === null ? '𝒪' : p < 100000n ? `(${P.x}, ${P.y})` : `<span class="num">${encodeSEC(P, curve)}</span>`);
+    const ptStr = (P) => (P === null ? '𝒪' : p < 100000n ? `(${P.x}, ${P.y})` : `<span class="num">${encodeSECExact(P, curve, m.prime)}</span>`);
     if (m.op.status === 'ok') {
       m.rel.push([m.op.label, m.op.P ? ptStr(m.op.P) : '<span class="good">𝒪, the point at infinity</span>']);
       const ch = m.op.chord;

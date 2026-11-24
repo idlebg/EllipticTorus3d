@@ -1,11 +1,40 @@
 # Changelog
 
-## Unreleased
+Notable changes to the visualizer and this repository, newest first. The version is the one in `package.json`.
+From 3.2.2 on, each version lists what was **Fixed**, **Changed**, **Added** or **Removed** since the version before
+it. Changes made after the latest version are collected under **Unreleased** until the next version takes them in.
+
+## 3.2.2 — 2026-11-24
+
+### Fixed
+
+- With *Force group law*, Step on a curve with p ≥ 100 000 wrote an off-curve result as compressed SEC, which reads
+  back as the curve point with that x (or as an error for a twist x), so P₁ silently became another point. Step,
+  P₂ = −P₁, *Use as P₁ / P₂*, *Copy SEC*, the Relations rows and the inspector's −P now write compressed SEC only where
+  it reads back as the same point (on the curve, p prime) and uncompressed SEC (`04` ‖ x ‖ y) otherwise, so a forced
+  walk on secp256k1 keeps its exact points. On a composite p ≥ 100 000 these paths now write uncompressed SEC, which
+  the parser accepts there. Checked by 4 new engine checks and 7 new end-to-end checks.
+
+### Changed
 
 - The tour video is now `samples/tour.mp4`: 1920×1080, 30 fps, H.264, 40 s, 9 MB (it was a 1280×800 WebM).
   `test/tour.py` makes it frame by frame on a virtual clock, rendered at 2× and scaled down, so motion is even and
   lines are smooth, with a drawn pointer; the file is checked by decoding it against the captured frames (40–43 dB
   PSNR). The gallery shows a 16:9 poster frame taken from the video itself.
+- `package-lock.json` carries the package version again (it still said 3.0.0).
+
+### Added
+
+- Tutorials, in `tutorials/` and online at https://idlebg.com/idleGevrek/tutorials/: 40 pages, in four levels
+  (Explorer, Learner, Bitcoiner, Researcher) and six reference pages, from no maths at all to Bitcoin keys and
+  research on elliptic curves. Their 132 worked examples each have a screenshot and a link that opens the visualizer
+  in exactly that state, and every number in the text is checked against the visualizer and an independent
+  computation. In this repository they come as an HTML reader that opens the visualizer at the top of the
+  repository, as Markdown chapters that read on GitHub, and with a README.
+- The tutorials' single-file edition, `tutorials/elliptic_curve_torus_tutorials.html` (14.2 MiB): every page, every
+  screenshot and the visualizer in one HTML file that works offline. It is in this repository only.
+- The gallery, online and in `samples/index.html`, has an entry for the tutorials at the top; `samples/README.md` and
+  the README link to them.
 
 ## 3.2.1 — 2026-11-23
 

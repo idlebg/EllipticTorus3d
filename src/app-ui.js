@@ -221,7 +221,7 @@ function renderInspector() {
     rows.push([kind === 'compressed' ? 'SEC 02/03' : kind === 'uncompressed' ? 'SEC 04' : 'SEC 06/07', `<span class="hexv">${enc}</span>${cp(enc)}`]);
   }
   const nP = c.neg(P);
-  rows.push(['−P (mirror)', `<span class="hexv">${small ? `(${nP.x}, ${nP.y})` : encodeSEC(nP, c)}</span>`]);
+  rows.push(['−P (mirror)', `<span class="hexv">${small ? `(${nP.x}, ${nP.y})` : encodeSECExact(nP, c, M.prime)}</span>`]);
   if (!t.onCurve) rows.push(['b′', `<span class="hexv">${shortHex(c.bPrime(P), c.p)}</span> <span class="empty">: this point lives on y² = x³ + ax + b′</span>`]);
   setHTML(el, `<div class="insp-head">${swatch(t)}<b>${escapeHtml(targetTitle(t))}</b>${tags.join('')}</div>
     <dl class="kv">${rows.map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join('')}</dl>`);
@@ -717,9 +717,13 @@ function applyPreset(id) {
   update();
 }
 
+/**
+ * A point as field text that reads back as exactly this point (Step, Use as P₁ / P₂, −P₁, random): (x, y) below
+ * MAP_SMALL, else SEC, compressed only where that is exact, so a forced walk keeps its off-curve points.
+ */
 function pointText(P) {
   if (!P) return 'O';
-  return M.curve.p < MAP_SMALL ? `(${P.x}, ${P.y})` : encodeSEC(P, M.curve);
+  return M.curve.p < MAP_SMALL ? `(${P.x}, ${P.y})` : encodeSECExact(P, M.curve, M.prime);
 }
 
 function applyTheme(theme) {
@@ -874,7 +878,7 @@ function wire() {
     if (a.dataset.act === 'unpin') unpin(key);
     else if (!t) return;
     else if (a.dataset.act === 'focus') focusOn(t.pos);
-    else if (a.dataset.act === 'copy') copyText(encodeSEC(t.P, M.curve));
+    else if (a.dataset.act === 'copy') copyText(encodeSECExact(t.P, M.curve, M.prime));
     else if (a.dataset.act === 'p1' || a.dataset.act === 'p2') { S[a.dataset.act] = pointText(t.P); markCustomIfEdited(); writeFields(); update(); toast(`Set as ${a.dataset.act === 'p1' ? 'P₁' : 'P₂'}`); }
   });
 

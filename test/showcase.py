@@ -12,6 +12,9 @@ reference values used below come from ref_out.json.
 
 Three outputs share the samples: samples/index.html opens the visualizer next to the repository (../), the site
 variant opens the copy next to it on idlebg.com, and samples/README.md (read on GitHub) opens the hosted one.
+Both galleries and the README also point to the tutorials, which the release tool puts beside them: tutorials/ in the
+repository (../tutorials/index.html from samples/index.html, ../tutorials/ from the README) and on the site
+(tutorials/ from the gallery).
 """
 import sys, json, base64, html, pathlib
 from playwright.sync_api import sync_playwright
@@ -25,6 +28,8 @@ APP_FILE = 'elliptic_curve_torus_visualizer_v3.html'
 APP = '../' + APP_FILE
 REPO_URL = 'https://github.com/idlebg/EllipticTorus3d'
 SITE_URL = 'https://idlebg.com/idleGevrek/'
+TUTORIALS_URL = SITE_URL + 'tutorials/'                  # every link to the tutorials ends in a slash
+TUTORIALS_CARD = 'img/tutorials-card.jpg'                # 1200 x 630, inside the tutorials' folder
 SITE_OUT = next((pathlib.Path(a.split('=', 1)[1]) for a in sys.argv if a.startswith('--site-out=')), None)
 QUERY = '' if GPU else '?lines=fat'
 K1 = REF['secp256k1']; R1 = REF['p256']
@@ -320,6 +325,20 @@ def gallery(app, site):
     the paper theme, the side view with the mirror plane edge-on, Step walking P₁ through the multiples (key N),
     then every shape in turn (key S), each one morphing out of the last.</p>
   </section>'''
+    # the tutorials beside the gallery on the site, at the top of the repository otherwise; offline (file://) a folder link
+    # would open a directory listing, so the repository's gallery names the page, as the tutorials' own pages do there
+    tut = 'tutorials/' if site else '../tutorials/'
+    tut_page = tut if site else tut + 'index.html'
+    tutorials = f'''  <section class="tut" aria-labelledby="tut-h"><div class="box">
+    <a class="pic" href="{tut_page}" tabindex="-1" aria-hidden="true"><img src="{tut}{TUTORIALS_CARD}" alt="" width="1200" height="630"></a>
+    <div class="body">
+      <h2 id="tut-h">Tutorials: from first steps to Bitcoin keys</h2>
+      <p>How to use the visualizer and what it can show, for every level: from no maths at all to Bitcoin keys and research on
+      elliptic curves. Each worked example has a screenshot and opens the visualizer in exactly that state, and every number in
+      the text is checked against the visualizer and an independent computation.</p>
+      <div class="acts"><a class="open" href="{tut_page}">Read the tutorials</a></div>
+    </div>
+  </div></section>'''
     desc = ('Points of y² = x³ + ax + b over F_p on a torus and eight other shapes: eighteen ready-made states of a single-file, '
             'offline elliptic-curve visualizer, each one click away from the live page.')
     social = '' if not site else '\n'.join([
@@ -391,6 +410,16 @@ main {{ max-width: 1240px; margin: 0 auto; padding: 8px 24px 40px; display: grid
 .open:hover {{ filter: brightness(1.08); }}
 .hint {{ color: var(--muted); font-size: 12px; }}
 kbd {{ font: 11px var(--font-ui); border: 1px solid var(--line-2); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; background: var(--panel-2); color: var(--text); }}
+.tut {{ max-width: 1008px; margin: 0 auto; padding: 8px 24px 12px; }}
+.tut .box {{ display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; transition: transform .18s, box-shadow .18s, border-color .18s; }}
+.tut .box:hover {{ transform: translateY(-2px); border-color: var(--line-2); box-shadow: 0 14px 34px rgba(0, 0, 0, .45); }}
+.tut .pic {{ display: block; overflow: hidden; border-right: 1px solid var(--line); }}
+.tut .pic img {{ display: block; width: 100%; height: 100%; aspect-ratio: 1200 / 630; object-fit: cover; transition: transform .35s; }}
+.tut .box:hover .pic img {{ transform: scale(1.025); }}
+.tut .body {{ justify-content: center; padding: 18px 20px; }}
+.tut .body h2 {{ font-size: 17px; }}
+.tut .acts {{ margin-top: 2px; }}
+@media (max-width: 760px) {{ .tut .box {{ grid-template-columns: 1fr; }} .tut .pic {{ border-right: 0; border-bottom: 1px solid var(--line); }} }}
 .tour {{ max-width: 1008px; margin: 0 auto; padding: 8px 24px 8px; }}
 .tour video {{ width: 100%; border-radius: 12px; border: 1px solid var(--line); display: block; background: #000; }}
 .tour p {{ color: var(--muted); font-size: 13px; margin: 8px 0 0; }}
@@ -417,6 +446,7 @@ dialog p {{ margin: 0; padding: 8px 14px; font-size: 13px; color: var(--muted); 
     <a class="cta ghost" href="{REPO_URL}" target="_blank" rel="noopener"><svg viewBox="0 0 16 16"><path d="m5.5 4.5-3.5 3.5 3.5 3.5M10.5 4.5 14 8l-3.5 3.5M9.2 2.8 6.8 13.2"/></svg>Source on GitHub</a>
   </div>
 </header>
+{tutorials}
 {video}
 <nav class="filters" aria-label="Filter by tag">
 {filters}
@@ -464,7 +494,9 @@ md = ['# Showcase — elliptic curve → torus', '',
       'Eighteen ready-made states of the visualizer, each a screenshot plus a link that opens the page exactly there. The gallery is',
       'online at [idlebg.com/idleGevrek](%s); `samples/index.html` is the same gallery offline, opening the' % SITE_URL,
       '`elliptic_curve_torus_visualizer_v3.html` next to it. The claims in the captions are checked against the visualizer\'s own',
-      'computation when the gallery is built (`py -3 test/showcase.py --gpu`); screenshots were taken in Chrome on an RTX 4090.', '']
+      'computation when the gallery is built (`py -3 test/showcase.py --gpu`); screenshots were taken in Chrome on an RTX 4090.', '',
+      'Tutorials with worked examples like these, for every level from first steps to Bitcoin keys: [`tutorials/`](../tutorials/), '
+      'also online at [idlebg.com/idleGevrek/tutorials](%s).' % TUTORIALS_URL, '']
 if (OUT / 'tour.mp4').exists():
     md += ['A 40-second tour of the F₂₂₃ sample, 1920×1080 (auto-rotate, hover cards, a pinned result, paper theme, side view, Step walking '
            'the multiples, then every shape morphing into the next): [`tour.mp4`](tour.mp4).', '',

@@ -231,6 +231,35 @@ with sync_playwright() as pw:
     page.click('label.chk:has(#force)'); page.wait_for_timeout(300)
     check('force math computes', ev("ecTorus.model.op.status === 'ok'"))
     shot('i22-offcurve-forced')
+    # a forced walk keeps its off-curve points on a 256-bit curve: Step, P₂ = −P₁, Copy SEC and Use as P₂ write them as
+    # 04… (3.2.1 wrote compressed SEC, which lifts x back onto the curve). Expected sums: the chord formula, here.
+    kp, gx, gy = (int(v) for v in ev("(() => { const k = ecTorus.engine.KNOWN[0]; return [k.p, k.G.x, k.G.y].map(String); })()"))
+    def chord_sum(P, Q):  # affine P + Q for P ≠ ±Q; b does not enter, which is all that force group law relies on
+        lam = (Q[1] - P[1]) * pow(Q[0] - P[0], -1, kp) % kp
+        x3 = (lam * lam - P[0] - Q[0]) % kp
+        return (x3, (lam * (P[0] - x3) - P[1]) % kp)
+    pt = lambda k: ev(f"(() => {{ const t = ecTorus.model.pts['{k}']; return t ? [String(t.P.x), String(t.P.y), t.onCurve] : null; }})()")
+    def off_at(k, P):  # point k is exactly P, and off the curve
+        r = pt(k); return r is not None and (int(r[0]), int(r[1])) == P and r[2] is False
+    page.fill('#p1', '(1, 1)'); page.fill('#p2', 'G'); page.press('#p2', 'Enter'); page.wait_for_timeout(300)
+    s1 = chord_sum((1, 1), (gx, gy))
+    check('forced (1, 1) + G is the chord formula, off the curve', off_at('sum', s1), json.dumps(pt('sum')))
+    page.click('#stepBtn'); page.wait_for_timeout(300)
+    check('Step writes an off-curve result exactly (04…)', ev("ecTorus.state.p1.startsWith('04') && ecTorus.model.op.status === 'ok'") and off_at('p1', s1), ev("ecTorus.state.p1"))
+    page.click('#stepBtn'); page.wait_for_timeout(300)
+    check('the forced walk goes on: P1 = ((1, 1) + G) + G', off_at('p1', chord_sum(s1, (gx, gy))), json.dumps(pt('p1')))
+    page.fill('#p1', '(1, 1)'); page.press('#p1', 'Enter'); page.wait_for_timeout(300)
+    page.click('#negBtn'); page.wait_for_timeout(300)
+    check('P2 = −P1 keeps an off-curve P1: (1, p − 1)', ev("ecTorus.state.p2.startsWith('04')") and off_at('p2', (1, kp - 1)), ev("ecTorus.state.p2"))
+    page.fill('#p2', 'G'); page.press('#p2', 'Enter'); page.wait_for_timeout(300)
+    pos = ev("ecTorus.screenOf('p1')")
+    page.mouse.move(pos['x'], pos['y']); page.wait_for_timeout(150); page.mouse.click(pos['x'], pos['y']); page.wait_for_timeout(300)
+    check('pin the off-curve P1', ev("[...document.querySelectorAll('.card.pinned b')].map(b => b.textContent).join('|')") == 'P₁', ev("[...document.querySelectorAll('.card.pinned b')].map(b => b.textContent).join('|')"))
+    page.click('.card.pinned [data-act="copy"]'); page.wait_for_timeout(200)
+    check('Copy SEC on an off-curve card copies 04…', ev("navigator.clipboard.readText()") == '04' + f'{1:064x}' * 2, ev("navigator.clipboard.readText()"))
+    page.click('.card.pinned [data-act="p2"]'); page.wait_for_timeout(300)
+    check('Use as P2 keeps an off-curve point', ev("ecTorus.state.p2.startsWith('04')") and off_at('p2', (1, 1)), ev("ecTorus.state.p2"))
+    page.keyboard.press('Escape'); page.keyboard.press('Escape'); page.wait_for_timeout(150)
     page.click('label.chk:has(#force)')
     page.fill('#p1', '02' + '00' * 31 + '05'); page.press('#p1', 'Enter'); page.wait_for_timeout(300)
     check('twist x message', 'twist' in ev("document.getElementById('p1Msg').innerText"))

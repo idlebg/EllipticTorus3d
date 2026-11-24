@@ -135,6 +135,9 @@ without them); `--gpu` runs the installed Chrome, headed, on the real GPU; `--br
 - The chord is drawn as a continuous line only when the centred |λ| ≤ 24, else the coil hides the surface; the flat
   map shows its p lattice points instead (p ≤ 4000).
 - A BigInt `**` can build a 10⁹-bit number for seconds before any size guard sees it: check the size first.
+- A compressed SEC key names the curve point with that x. Points the app writes back into a field or copies go through
+  `pointText` / `encodeSECExact`: compressed only on the curve with p prime, `04…` otherwise (an off-curve point
+  written compressed reads back as another point, and a composite p refuses compressed input).
 - `history.replaceState` on `file://` and `localStorage` can throw; both are wrapped.
 - The `#glfail` notice covers the whole stage: it must keep `pointer-events: none` or the flat map dies without
   WebGL.

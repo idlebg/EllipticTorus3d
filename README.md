@@ -13,11 +13,27 @@ and teaching.
 
 ![the F₂₂₃ chord on the torus, dark theme](samples/img/06-f223-chord.png)
 
-**Contents:** [Why a torus](#why-a-torus) · [Quick start](#quick-start) · [What you can do](#what-you-can-do) ·
-[Gallery](#gallery) · [Shapes](#shapes) · [Input formats](#input-formats) · [Keyboard and mouse](#keyboard-and-mouse) ·
-[Export, links and scripting](#export-links-and-scripting) · [How it is checked](#how-it-is-checked) ·
-[Browser support and privacy](#browser-support-and-privacy) · [Build from source](#build-from-source) ·
-[Licence](#licence)
+**Contents:** [Tutorials](#tutorials) · [Why a torus](#why-a-torus) · [Quick start](#quick-start) ·
+[What you can do](#what-you-can-do) · [Gallery](#gallery) · [Shapes](#shapes) · [Input formats](#input-formats) ·
+[Keyboard and mouse](#keyboard-and-mouse) · [Export, links and scripting](#export-links-and-scripting) ·
+[How it is checked](#how-it-is-checked) · [Browser support and privacy](#browser-support-and-privacy) ·
+[Build from source](#build-from-source) · [Licence](#licence)
+
+## Tutorials
+
+<a href="tutorials/"><img src="tutorials/img/tutorials-card.jpg" width="640" alt="The tutorials: six of the nine shapes, the torus, the trefoil knot, the lemniscate, the icosahedron, the Klein bottle and the wavy plane"></a>
+
+How to use the visualizer and what it can show, for every level: from no maths at all to Bitcoin keys and research on
+elliptic curves. Each worked example has a screenshot and opens the visualizer in exactly that state, and every
+number in the text is checked against the visualizer and an independent computation.
+
+- **Read them online:** [idlebg.com/idleGevrek/tutorials](https://idlebg.com/idleGevrek/tutorials/).
+- **Browse them here:** [`tutorials/`](tutorials/). The chapters are Markdown and read well on GitHub; in a clone,
+  `tutorials/index.html` is the same reader as online and opens the visualizer at the top of the repository.
+- **Download them as one file:**
+  [`tutorials/elliptic_curve_torus_tutorials.html`](tutorials/elliptic_curve_torus_tutorials.html) holds every page,
+  every screenshot and the visualizer, and works offline. GitHub shows HTML files as source, so use
+  **Download raw file** on that page, then open the file in any current browser.
 
 ## Why a torus
 
@@ -86,7 +102,8 @@ once around the tube (v = 2π·y/p). Several facts about elliptic curves then be
 - **Step** (`N` or the Step button) puts the result into P₁, so the operation runs again from there: with P₂ = G it
   walks G, 2G, 3G, …, with 2·P₁ it walks the doublings, and the pinned cards follow.
 - **Force group law on off-curve points** applies the formulas to invalid points anyway, which is what an
-  implementation without the on-curve check would compute.
+  implementation without the on-curve check would compute. Step, P₂ = −P₁, *Use as* and *Copy SEC* keep such points
+  exactly: above p = 100 000 they are written `04…`, since a compressed key would lift x back onto the curve.
 
 ### Group structure
 
@@ -250,14 +267,14 @@ for a card, click to pin, double-click to fly to a point.
 
 The maths is checked against an independent reference, never against itself:
 
-- **209 engine checks** (`npm test`) against [`ref_out.json`](ref_out.json), produced by [`ref.py`](ref.py) with
+- **213 engine checks** (`npm test`) against [`ref_out.json`](ref_out.json), produced by [`ref.py`](ref.py) with
   OpenSSL (through pyca/cryptography) for secp256k1 and P-256 multiples, sympy for primality and square roots, and
   brute force on the toy curves: point-set hashes, order histograms, 2-torsion, discrete logs, SEC points whose x
   starts with a zero byte, and the parser's edge cases.
 - **140 shape-geometry checks** from the shapes' own definitions: unit normals perpendicular to the surface,
   negation as a reflection, seams, the icosahedron's faces, the trefoil's knot type and embedding.
 - **42 checks inside the page**, run at load (Self-test section).
-- **Browser suites** (Playwright): every control end to end with zero console errors allowed (96 checks); hostile
+- **Browser suites** (Playwright): every control end to end with zero console errors allowed (103 checks); hostile
   links and stored state, a sanitiser fuzz, inputs that must not freeze the tab, GPU memory over 50 cycles, WebGL
   context loss and restore; the page without WebGL; WebKit; line widths and frame times on a real GPU.
 - **Every caption in the gallery** is checked against the live page before its screenshot is taken.
@@ -278,7 +295,7 @@ code, which stays readable inside the page.
 
 ```sh
 npm ci                        # three@0.187.0, esbuild@0.28.2 (pinned)
-npm test                      # 209 engine checks vs ref_out.json + 140 shape-geometry checks (needs nothing installed)
+npm test                      # 213 engine checks vs ref_out.json + 140 shape-geometry checks (needs nothing installed)
 npm run build                 # -> elliptic_curve_torus_visualizer_v3.html
 npm run e2e                   # headless Chrome pass over every control (Playwright + Chromium, SwiftShader)
 npm run e2e:gpu               # the same in the installed Chrome on the real GPU

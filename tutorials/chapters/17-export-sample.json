@@ -1,0 +1,236 @@
+{
+  "tool": "Elliptic curve → torus v3 (idlebg.com)",
+  "source": "https://github.com/idlebg/EllipticTorus3d",
+  "exported": "2026-11-24T12:24:02.923Z",
+  "input": {
+    "a": "0",
+    "b": "7",
+    "p": "223",
+    "P1": "(47, 71)",
+    "P2": "(116, 55)",
+    "G": "(47, 71)",
+    "op": "add",
+    "shape": "torus",
+    "mapping": "scale",
+    "bits": 24,
+    "sectors": [
+      24,
+      16
+    ]
+  },
+  "curve": {
+    "a": "0x0",
+    "b": "0x7",
+    "p": "0xdf",
+    "bits": 8,
+    "prime": true,
+    "singular": false,
+    "j": "0x0",
+    "name": null,
+    "n": null,
+    "pointCount": "0xfc",
+    "beta": "0xb7"
+  },
+  "inputs": {
+    "p1": {
+      "kind": "affine",
+      "onCurve": true,
+      "warnings": []
+    },
+    "p2": {
+      "kind": "affine",
+      "onCurve": true,
+      "warnings": []
+    },
+    "g": {
+      "kind": "affine",
+      "onCurve": true,
+      "warnings": []
+    }
+  },
+  "points": {
+    "p1": {
+      "label": "P₁",
+      "x": "0x2f",
+      "y": "0x47",
+      "yParity": "odd",
+      "onCurve": true,
+      "sec": {
+        "compressed": "032f",
+        "uncompressed": "042f47",
+        "hybrid": "072f47"
+      },
+      "torus": {
+        "uTurns": 0.21076233183856496,
+        "vTurns": 0.31838565022421506,
+        "uDeg": 75.87443946188338,
+        "vDeg": 114.61883408071742,
+        "uRad": 1.3242587867149798,
+        "vRad": 2.000476039505607,
+        "sector": [
+          5,
+          5
+        ]
+      },
+      "k": "0x1",
+      "order": "0x15"
+    },
+    "p2": {
+      "label": "P₂",
+      "x": "0x74",
+      "y": "0x37",
+      "yParity": "odd",
+      "onCurve": true,
+      "sec": {
+        "compressed": "0374",
+        "uncompressed": "047437",
+        "hybrid": "077437"
+      },
+      "torus": {
+        "uTurns": 0.5201793721973094,
+        "vTurns": 0.24663677130044825,
+        "uDeg": 187.26457399103137,
+        "vDeg": 88.78923766816138,
+        "uRad": 3.2683833884880356,
+        "vRad": 1.5496645376451883,
+        "sector": [
+          12,
+          3
+        ]
+      },
+      "k": "0x8",
+      "order": "0x15"
+    },
+    "sum": {
+      "label": "P₁ + P₂",
+      "x": "0x45",
+      "y": "0x56",
+      "yParity": "even",
+      "onCurve": true,
+      "sec": {
+        "compressed": "0245",
+        "uncompressed": "044556",
+        "hybrid": "064556"
+      },
+      "torus": {
+        "uTurns": 0.3094170403587442,
+        "vTurns": 0.3856502242152464,
+        "uDeg": 111.3901345291479,
+        "vDeg": 138.83408071748872,
+        "uRad": 1.9441246017730545,
+        "vRad": 2.423111822499749,
+        "sector": [
+          7,
+          6
+        ]
+      },
+      "k": "0x9",
+      "order": "0x7"
+    },
+    "g": {
+      "label": "G",
+      "x": "0x2f",
+      "y": "0x47",
+      "yParity": "odd",
+      "onCurve": true,
+      "sec": {
+        "compressed": "032f",
+        "uncompressed": "042f47",
+        "hybrid": "072f47"
+      },
+      "torus": {
+        "uTurns": 0.21076233183856496,
+        "vTurns": 0.31838565022421506,
+        "uDeg": 75.87443946188338,
+        "vDeg": 114.61883408071742,
+        "uRad": 1.3242587867149798,
+        "vRad": 2.000476039505607,
+        "sector": [
+          5,
+          5
+        ]
+      },
+      "k": "0x1",
+      "order": "0x15"
+    },
+    "r": {
+      "label": "R = −(P₁ + P₂)",
+      "x": "0x45",
+      "y": "0x89",
+      "yParity": "odd",
+      "onCurve": true,
+      "sec": {
+        "compressed": "0345",
+        "uncompressed": "044589",
+        "hybrid": "074589"
+      },
+      "torus": {
+        "uTurns": 0.3094170403587442,
+        "vTurns": 0.6143497757847534,
+        "uDeg": 111.3901345291479,
+        "vDeg": 221.1659192825112,
+        "uRad": 1.9441246017730545,
+        "vRad": 3.8600734846798357,
+        "sector": [
+          7,
+          9
+        ]
+      },
+      "k": "0xc",
+      "order": "0x7"
+    }
+  },
+  "operation": {
+    "label": "P₁ + P₂",
+    "status": "ok",
+    "result": {
+      "label": "P₁ + P₂",
+      "x": "0x45",
+      "y": "0x56",
+      "yParity": "even",
+      "onCurve": true,
+      "sec": {
+        "compressed": "0245",
+        "uncompressed": "044556",
+        "hybrid": "064556"
+      },
+      "torus": {
+        "uTurns": 0.3094170403587442,
+        "vTurns": 0.3856502242152464,
+        "uDeg": 111.3901345291479,
+        "vDeg": 138.83408071748872,
+        "uRad": 1.9441246017730545,
+        "vRad": 2.423111822499749,
+        "sector": [
+          7,
+          6
+        ]
+      },
+      "k": "0x9",
+      "order": "0x7"
+    },
+    "chord": {
+      "type": "secant",
+      "lambda": "0x3",
+      "c": "0x99"
+    }
+  },
+  "relations": {
+    "P1vsP2": {
+      "sameX": false,
+      "sameY": false,
+      "equal": false,
+      "negation": false,
+      "deltaUDeg": 111.39013452914799,
+      "deltaVDeg": 25.82959641255605,
+      "deltaURad": 1.944124601773056,
+      "deltaVRad": 0.4508115018604187
+    },
+    "P1vsG": "G",
+    "P2vsG": "other",
+    "doubles": {
+      "P1": "0324",
+      "P2": "037e"
+    }
+  }
+}

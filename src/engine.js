@@ -273,6 +273,17 @@ export function encodeSEC(P, curve, kind = 'compressed') {
   return '04' + hex(P.x, fb) + hex(P.y, fb);
 }
 
+/**
+ * The SEC form that parsePoint reads back as exactly P. Compressed only when lifting x with y's parity gives P again:
+ * P on the curve and p prime (the square roots of y² are then y and −y, of opposite parity, or 0 alone). Off the
+ * curve (force group law, invalid-curve inputs) the lift lands on the curve point with that x or on the twist, and a
+ * composite p refuses compressed input, so those are written uncompressed (04). `prime` is the caller's cached
+ * primality test.
+ */
+export function encodeSECExact(P, curve, prime) {
+  return encodeSEC(P, curve, prime && curve.isOn(P) ? 'compressed' : 'uncompressed');
+}
+
 /** Lift x to a point with the requested y parity (null if x is off the curve). */
 export function liftX(curve, x, wantOdd) {
   const y0 = sqrtMod(curve.rhs(x), curve.p);
