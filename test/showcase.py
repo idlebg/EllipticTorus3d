@@ -421,7 +421,7 @@ kbd {{ font: 11px var(--font-ui); border: 1px solid var(--line-2); border-bottom
 .tut .acts {{ margin-top: 2px; }}
 @media (max-width: 760px) {{ .tut .box {{ grid-template-columns: 1fr; }} .tut .pic {{ border-right: 0; border-bottom: 1px solid var(--line); }} }}
 .tour {{ max-width: 1008px; margin: 0 auto; padding: 8px 24px 8px; }}
-.tour video {{ width: 100%; border-radius: 12px; border: 1px solid var(--line); display: block; background: #000; }}
+.tour video {{ width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: 12px; border: 1px solid var(--line); display: block; background: #000; }}
 .tour p {{ color: var(--muted); font-size: 13px; margin: 8px 0 0; }}
 dialog {{ padding: 0; border: 1px solid var(--line-2); border-radius: 12px; background: #000; max-width: min(1440px, 96vw); max-height: 94vh; box-shadow: 0 20px 60px rgba(0, 0, 0, .6); }}
 dialog::backdrop {{ background: rgba(3, 6, 10, .78); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }}

@@ -1,8 +1,13 @@
 """Record the tour video: samples/tour.mp4, 1920×1080, 30 fps, H.264 High profile.
 
-Frames are made, not filmed: the page runs on Playwright's virtual clock, and each frame advances it by exactly
-1/30 s (two animation frames, as on a 60 Hz screen) before the view is captured, so motion is even whatever the
-machine's speed. Each frame is rendered at 2× (3840×2160) and shrunk with the browser's high-quality filter, turned
+Frames are made, not filmed: the page runs on Playwright's virtual clock, paused, and each frame advances it by
+exactly 1/30 s in two animation frames of 1/60 s, as on a 60 Hz screen, before the view is captured, so motion is
+even whatever the machine's speed. The clock must be paused (installed alone, it also runs in real time, and each
+screenshot's real time sped the app's animations up three to five times), and the app's requestAnimationFrame callbacks
+wait in a queue run here at the clock's exact time (the clock's own frames fall on a 16 ms grid: 62.5 a second, so
+timed animations ran 4 % fast with a double step every 0.4 s). Real mouse moves reach the page only at its next real
+frame while the clock is paused, so each move is also handed to the app's canvas as a pointermove at once.
+Each frame is rendered at 2× (3840×2160) and shrunk with the browser's high-quality filter, turned
 into BT.709 limited-range YUV 4:2:0 here, and compressed by Chrome's own H.264 encoder (WebCodecs, constant
 quantizer) in a second page; the MP4 container is written in Python. CSS transitions are off while recording (they
 run on real time, not on the virtual clock), and a drawn pointer shows where the mouse is.
@@ -14,7 +19,7 @@ the tour starts from sample 06's state link.
 
     py -3 test/tour.py                 # samples/tour.mp4 and its poster
     py -3 test/tour.py --verify-only   # check an existing samples/tour.mp4 again (and rewrite the poster)
-    py -3 test/tour.py --pilot         # three seconds only, to check the pipeline
+    py -3 test/tour.py --pilot         # four seconds only (spin, hover, one morph), to check the pipeline and the timing
     py -3 test/tour.py --qp=20         # quantizer (lower is better and bigger)
 """
 import sys, json, base64, struct, time
@@ -132,15 +137,27 @@ POINTER = """() => {
   d.innerHTML = '<svg viewBox="0 0 22 28" width="22" height="28"><path d="M2 2v20.5l5.3-5.1 3.6 8.1 3.5-1.6-3.6-7.9H18z" fill="#fff" stroke="#111" stroke-width="1.6" stroke-linejoin="round"/></svg>';
   document.body.appendChild(d); }"""
 
+RAF = """() => {
+  // the app's animation frames wait here until the recorder runs them at the clock's exact time
+  const q = new Map(); let id = 0;
+  window.requestAnimationFrame = (cb) => { q.set(++id, cb); return id; };
+  window.cancelAnimationFrame = (k) => { q.delete(k); };
+  window.__tourFrame = () => { const now = performance.now(), cbs = [...q.values()]; q.clear(); for (const cb of cbs) cb(now); return cbs.length; }; }"""
+APP_HZ = 60  # animation frames per second, as on a 60 Hz screen
+assert APP_HZ % FPS == 0
+
 
 class Recorder:
     def __init__(self, page, cdp, enc):
-        self.page, self.cdp, self.enc, self.n, self.cursor = page, cdp, enc, 0, (W * 0.62, H * 0.86)
-        self.t0, self.keep = time.time(), []
+        self.page, self.cdp, self.enc, self.n, self.k, self.cursor = page, cdp, enc, 0, 0, (W * 0.62, H * 0.86)
+        self.t0, self.keep, self.morphing = time.time(), [], []
 
     def frame(self):
-        step = round((self.n + 1) * 1000 / FPS) - round(self.n * 1000 / FPS)  # 33 or 34 ms, exact on average
-        self.page.clock.run_for(step)
+        for _ in range(APP_HZ // FPS):  # 17, 17, 16 ms: exact on average
+            self.page.clock.run_for(round((self.k + 1) * 1000 / APP_HZ) - round(self.k * 1000 / APP_HZ))  # timers due by then
+            self.page.evaluate('() => __tourFrame()')
+            self.k += 1
+        if PILOT: self.morphing.append(self.page.evaluate('() => !!ecTorus.debug.view.morph'))
         shot = self.cdp.send('Page.captureScreenshot', {'format': 'jpeg', 'quality': 92, 'optimizeForSpeed': True})
         self.enc.evaluate('([b, i]) => encodeFrame(b, i)', [shot['data'], self.n])
         if self.n % 150 == 75 or '--keep-all' in sys.argv: self.keep.append([self.n, shot['data']])  # a few originals for the PSNR check
@@ -150,8 +167,10 @@ class Recorder:
         for _ in range(round(seconds * FPS)): self.frame()
 
     def pointer(self, x, y):
-        self.page.mouse.move(x, y)
-        self.page.evaluate('([x, y]) => { document.getElementById("__tourPointer").style.transform = `translate(${x - 2}px, ${y - 2}px)`; }', [x, y])
+        self.page.mouse.move(x, y)  # the real mouse, for the click that pins
+        self.page.evaluate('''([x, y]) => {
+          document.getElementById("gl").dispatchEvent(new PointerEvent("pointermove", { clientX: x, clientY: y, bubbles: true, pointerType: "mouse", isPrimary: true }));
+          document.getElementById("__tourPointer").style.transform = `translate(${x - 2}px, ${y - 2}px)`; }''', [x, y])
         self.cursor = (x, y)
 
     def glide(self, x, y, seconds):
@@ -182,19 +201,26 @@ def main():
         ctx = b.new_context(viewport={'width': W, 'height': H}, device_scale_factor=2)
         page = ctx.new_page()
         page.clock.install(time=0)
+        page.clock.pause_at(1000)  # time moves only when a frame says so
         page.goto(HTML.as_uri() + '#s=' + tour['link'])
         page.bring_to_front()
         for _ in range(200):  # the app boots on the virtual clock: advance it until the model is there
             if page.evaluate('() => !!(window.ecTorus && ecTorus.model && ecTorus.model.curve && document.querySelector(".stage.ready"))'): break
             page.clock.run_for(50)
+        else:
+            raise SystemExit('the app did not start on the virtual clock')
         page.evaluate(POINTER)
         page.evaluate("() => { try { localStorage.clear(); } catch (e) {} }")
+        page.evaluate(RAF)
+        page.clock.run_for(40)  # a frame the app asked of the clock's own queue runs once, and the next one waits in ours
         cdp = ctx.new_cdp_session(page)
         r = Recorder(page, cdp, enc)
         r.pointer(*r.cursor)
         r.hold(1.0)
         if PILOT:
-            r.key(' ', 2.0)
+            r.key(' ', 1.0); r.key(' ', 0.2)                       # spin a little
+            r.glide(*r.screen_of('p1'), 0.5); r.hold(0.5)           # a hover card
+            r.key('s', 1.0)                                         # one morph: 0.7 s is 21 frames at 30 fps
         else:
             r.key(' ', 4.5); r.key(' ', 0.6)                       # auto-rotate, then settle
             for k in ['p1', 'p2', 'r']:                             # hover cards
@@ -216,6 +242,9 @@ def main():
     print('encoder colour space:', json.dumps(info.get('space')))
     print(f'{OUT.name}: {len(samples)} frames, {len(samples) / FPS:.1f} s, {OUT.stat().st_size / 1048576:.1f} MiB, '
           f'{sum(info["keys"])} key frames, QP {QP}, made in {time.time() - r.t0:.0f} s', flush=True)
+    if PILOT:  # the morph lasts its 0.7 s of app time, 42 animation frames: up while 20 video frames are taken at 30 fps
+        m = r.morphing
+        print('morph in frames', [i for i, x in enumerate(m) if x][:1], 'to', [i for i, x in enumerate(m) if x][-1:], '=', sum(m), 'frames', flush=True)
     if '--dump' in sys.argv:  # the kept originals and the chunk sizes, to look at
         for i, b64 in r.keep: (blank.parent / f'tour-frame-{i}.jpg').write_bytes(base64.b64decode(b64))
         print('chunk bytes (key*):', ' '.join(f'{s}{"*" if k else ""}' for s, k in zip(sizes, info['keys'])), '| times[:5]', info['times'][:5], '| avcC', bytes(info['desc'][:12]).hex())

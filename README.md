@@ -7,6 +7,8 @@ and teaching.
 
 - **Try it online:** [idlebg.com/idleGevrek](https://idlebg.com/idleGevrek/), a gallery of eighteen ready-made
   states and a tour video, each opening the live page exactly there.
+- **Watch it:** [the 78-second video on YouTube](https://youtu.be/t3U8uDbOmzI): a curve's points becoming a torus,
+  the group law, Bitcoin's curve and the nine shapes; every 3D shot is the visualizer itself, rendered frame by frame.
 - **Source:** [github.com/idlebg/EllipticTorus3d](https://github.com/idlebg/EllipticTorus3d)
 - **Run it locally:** download [`elliptic_curve_torus_visualizer_v3.html`](elliptic_curve_torus_visualizer_v3.html)
   and open it in any current browser. One file, works from disk, no network, no install, no tracking.
@@ -162,7 +164,8 @@ The full set covers secp256k1 (the G / −G mirror, G + 2G = 3G, the GLV endomor
 chord winding three times on F₂₂₃, a β-orbit outside ⟨G⟩ on the non-cyclic F₂₂₃, the tangent on F₉₇, discrete logs
 on F₁₇, walking the multiples of G with Step, the input edge cases (a hybrid key with a wrong parity bit, an
 invalid-curve point) and six of the other shapes. The 40-second tour video ([`samples/tour.mp4`](samples/tour.mp4),
-1920×1080) shows auto-rotate, the cards, the paper theme, Step and every shape morphing into the next.
+1920×1080) shows auto-rotate, the cards, the paper theme, Step and every shape morphing into the next; a 78-second
+video with sound is [on YouTube](https://youtu.be/t3U8uDbOmzI).
 
 ## Shapes
 

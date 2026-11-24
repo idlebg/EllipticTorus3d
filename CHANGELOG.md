@@ -4,6 +4,25 @@ Notable changes to the visualizer and this repository, newest first. The version
 From 3.2.2 on, each version lists what was **Fixed**, **Changed**, **Added** or **Removed** since the version before
 it. Changes made after the latest version are collected under **Unreleased** until the next version takes them in.
 
+## Unreleased
+
+### Fixed
+
+- The tour video ran fast. `test/tour.py` installed Playwright's virtual clock without pausing it, so real time leaked
+  into every frame and the app's own animations (the 0.7 s shape morph, the camera moves of keys 1 to 3, auto-rotate)
+  ran several times faster than the frames said; the clock's own animation frames also fell on a 16 ms grid, 62.5 a
+  second. The clock is now paused and the app's animation frames run at exactly 60 a second of video time, two per
+  video frame, so a morph lasts its 0.7 s in the video. `samples/tour.mp4` and its poster are recorded again.
+- The video box of the gallery (`samples/index.html`): the `<video>` kept its `height="1080"` while the CSS set only
+  its width, so the player stood 1080 px tall (960 × 1080 in a 1440 px window, 342 × 1080 on a 390 px phone) with the
+  picture letterboxed inside. It keeps the video's 16:9 shape now.
+
+### Added
+
+- A 78-second video on YouTube, https://youtu.be/t3U8uDbOmzI: the points of a curve becoming a torus, the group law,
+  Bitcoin's curve and the nine shapes, with an original score; every 3D shot is the visualizer itself, rendered frame
+  by frame. The README links to it, and so does the online gallery.
+
 ## 3.2.2 — 2026-11-24
 
 ### Fixed
